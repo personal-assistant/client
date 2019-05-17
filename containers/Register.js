@@ -30,15 +30,15 @@ export default class AnatomyExample extends Component {
 
   render() {
     return (
-      <KeyboardAvoidingView
-        behavior="padding"
-        enabled
+      <KeyboardAvoidingView 
+        behavior="padding" 
+        enabled 
         resetScrollToCoords={{ x: 0, y: 0 }}
         scrollEnabled={false}
         style={{
-          flex: 1,
-          paddingTop: Constants.statusBarHeight,
-        }}>
+        flex: 1,
+        paddingTop: Constants.statusBarHeight,
+      }}>
         <Container style={{ backgroundColor: "white" }}>
           <Content>
             <Container>
@@ -54,6 +54,10 @@ export default class AnatomyExample extends Component {
                 paddingHorizontal: 30,
               }}>
                 <Form>
+                <Item floatingLabel>
+                    <Label>Name</Label>
+                    <Input />
+                  </Item>
                   <Item floatingLabel>
                     <Label>Email</Label>
                     <Input />
@@ -66,20 +70,15 @@ export default class AnatomyExample extends Component {
                 <Container style={{
                   paddingHorizontal: 45
                 }}>
-                  <Button block success rounded style={{
+                  <Button  block success rounded style={{
                     marginTop: 40,
                   }}>
-                    <Text>Login</Text>
+                    <Text>submit</Text>
                   </Button>
-                  <Button
-                    block
-                    transparent
-                    style={{
-                      marginTop: 15
-                    }}
-                    onPress={() => this.props.navigation.navigate('Register')}
-                  >
-                    <Text>Register</Text>
+                  <Button block transparent style={{
+                    marginTop: 15
+                  }}>
+                    <Text>login</Text>
                   </Button>
                 </Container>
               </Container>
