@@ -70,20 +70,23 @@ export default class AnatomyExample extends Component {
                 <Container style={{
                   paddingHorizontal: 45
                 }}>
-                  <Button  block success rounded style={{
+                  <Button  block success style={{
                     marginTop: 40,
                   }}>
                     <Text>submit</Text>
-                  </Button>
-                  <Button block transparent style={{
-                    marginTop: 15
-                  }}>
-                    <Text>login</Text>
                   </Button>
                 </Container>
               </Container>
             </Container>
           </Content>
+          <Footer>
+            <FooterTab>
+              <Button full light onPress={() => this.props.navigation.navigate('Login')}>
+                <Text
+                  uppercase={false}>Been here before? Login</Text>
+              </Button>
+            </FooterTab>
+          </Footer>
         </Container>
       </KeyboardAvoidingView>
     )
