@@ -130,20 +130,18 @@ export default class AnatomyExample extends Component {
                   >
                     <Text>Login</Text>
                   </Button>
-                  <Button
-                    block
-                    transparent
-                    style={{
-                      marginTop: 15
-                    }}
-                    onPress={() => this.props.navigation.navigate('Register')}
-                  >
-                    <Text>Register</Text>
-                  </Button>
                 </Container>
               </Container>
             </Container>
           </Content>
+          <Footer>
+            <FooterTab>
+              <Button full light onPress={() => this.props.navigation.navigate('Register')}>
+                <Text
+                  uppercase={false}>Are you new here? Register</Text>
+              </Button>
+            </FooterTab>
+          </Footer>
         </Container>
       </KeyboardAvoidingView>
     )
