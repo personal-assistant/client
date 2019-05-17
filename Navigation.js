@@ -11,7 +11,7 @@ const RootStack = createStackNavigator({
   },
   Register: {
     screen: Register
-  }
+  },
 }, {
     headerMode: 'none',
     navigationOptions: {
@@ -21,4 +21,4 @@ const RootStack = createStackNavigator({
   }
 )
 
-export default createAppContainer(RootStack);
+export default createAppContainer(RootStack)
