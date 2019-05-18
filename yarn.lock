@@ -3600,6 +3600,11 @@ jsonify@~0.0.0:
   resolved "https://registry.yarnpkg.com/jsonify/-/jsonify-0.0.0.tgz#2c74b6ee41d93ca51b7b5aaee8f503631d252a73"
   integrity sha1-LHS27kHZPKUbe1qu6PUDYx0lKnM=
 
+jsrsasign@^8.0.12:
+  version "8.0.12"
+  resolved "https://registry.yarnpkg.com/jsrsasign/-/jsrsasign-8.0.12.tgz#22abb9656d34a30b9530436720835e89c2e5c316"
+  integrity sha1-Iqu5ZW00owuVMENnIINeicLlwxY=
+
 keymirror@0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/keymirror/-/keymirror-0.1.1.tgz#918889ea13f8d0a42e7c557250eee713adc95c35"
@@ -4887,6 +4892,13 @@ react-native-communications@2.2.1:
   resolved "https://registry.yarnpkg.com/react-native-communications/-/react-native-communications-2.2.1.tgz#7883b56b20a002eeb790c113f8616ea8692ca795"
   integrity sha1-eIO1ayCgAu63kMET+GFuqGksp5U=
 
+react-native-dialogflow@^3.2.2:
+  version "3.2.2"
+  resolved "https://registry.yarnpkg.com/react-native-dialogflow/-/react-native-dialogflow-3.2.2.tgz#91d74f053ebc18390332f2b21dcc17553b83a638"
+  integrity sha512-LWsrW7b9LA8+MTW4gA0z5jD7XrZ9ASfUMTck0hySEvnI+eqkY8Tz2cd166kHRW7yyIHlo5IhtkivWgm4EAyiNw==
+  dependencies:
+    jsrsasign "^8.0.12"
+
 react-native-drawer@2.5.1:
   version "2.5.1"
   resolved "https://registry.yarnpkg.com/react-native-drawer/-/react-native-drawer-2.5.1.tgz#08b9314184f48c724f1b467f8859797369798654"
@@ -5026,6 +5038,11 @@ react-native-view-shot@2.5.0:
   version "2.5.0"
   resolved "https://registry.yarnpkg.com/react-native-view-shot/-/react-native-view-shot-2.5.0.tgz#428a997f470d3148d0067c5b46abd988ef1aa4c0"
   integrity sha512-xFJA+N7wh8Ik/17I4QB24e0a0L3atg1ScVehvtYR5UBTgHdzTFA0ZylvXp9gkZt7V+AT5Pni0H3NQItpqSKFoQ==
+
+react-native-voice@^0.2.6:
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/react-native-voice/-/react-native-voice-0.2.6.tgz#f6c67fac932a511475ddc4c7b6ff0efeb540cc19"
+  integrity sha512-WeNlNNtYDxwyym203yzjTDDCH9iLThi24W85p0oP/0DS9jZ6B6WsPYidWyKg6Qv1TrOq/gHz9vwQLZforM7u3w==
 
 "react-native@https://github.com/expo/react-native/archive/sdk-32.0.0.tar.gz":
   version "0.57.1"
