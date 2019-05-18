@@ -5,6 +5,7 @@ import { Constants } from 'expo'
 import {
   StyleSheet,
   View,
+  Image,
   KeyboardAvoidingView
 } from "react-native";
 import {
@@ -36,13 +37,12 @@ export default class AnatomyExample extends Component {
   }
 
   submitForm = async () => {
-    console.log('masok pak ekooooooo')
     try {
-
       const { name, email, password } = this.state
+      console.log(this.state)
       const { status: existingStatus } = await Permissions.getAsync(
         Permissions.NOTIFICATIONS
-      )
+        )
       let finalStatus = existingStatus
 
       if (existingStatus !== 'granted') {
@@ -55,7 +55,7 @@ export default class AnatomyExample extends Component {
       }
 
       let token = await Notifications.getExpoPushTokenAsync()
-      console.log('masok 2')
+      console.log('masok 2', token)
       await axios.post('/users/register', {
         name,
         email,
@@ -85,29 +85,60 @@ export default class AnatomyExample extends Component {
           <Content>
             <Container>
               <Container style={{
-                flex: 1,
+                flex: 5,
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: 40,
+                backgroundColor: '#a6003c'
               }}>
-                <Thumbnail square large source={{ uri: 'https://upload.wikimedia.org/wikipedia/en/thumb/9/99/Eve_Channel_Logo.PNG/250px-Eve_Channel_Logo.PNG' }} />
+                <Image
+                  source={require('../assets/eveLogo.png')}
+                  style={{
+                    width: 144,
+                    height: 87
+                  }}
+
+                />
               </Container>
               <Container style={{
+                flex: 7,
                 paddingHorizontal: 30,
+                backgroundColor: '#a6003c'
+
               }}>
-                <Form>
-                  <Item floatingLabel>
-                    <Label>Name</Label>
+                <Form
+                  style={{
+                    backgroundColor: '#a6003c',
+                  }}
+                >
+                  <Item
+                    regular
+                    style={{
+                      backgroundColor: '#f8fbf5',
+                      borderRadius: 5
+                    }}>
                     <Input
+                      placeholder="name"
+                      onSubmitEditing={() => { this.emailInput._root.focus() }}
+                      returnKeyType={"next"}
                       onChangeText={(text) => {
                         this.setState({
                           name: text
                         })
-                      }} />
+                      }}
+                    />
                   </Item>
-                  <Item floatingLabel>
-                    <Label>Email</Label>
+                  <Item
+                    regular
+                    style={{
+                      backgroundColor: '#f8fbf5',
+                      borderRadius: 5,
+                      marginTop: 10
+                    }}>
                     <Input
+                      placeholder="email"
+                      returnKeyType={"next"}
+                      ref={c => this.emailInput = c}
+                      onSubmitEditing={() => this._passwordInput._root.focus()}
                       onChangeText={(text) => {
                         this.setState({
                           email: text
@@ -115,9 +146,16 @@ export default class AnatomyExample extends Component {
                       }}
                     />
                   </Item>
-                  <Item floatingLabel last>
-                    <Label>Password</Label>
+                  <Item
+                    regular
+                    style={{
+                      backgroundColor: '#f8fbf5',
+                      borderRadius: 5,
+                      marginTop: 10
+                    }}>
                     <Input
+                      placeholder="password"
+                      ref={c => this._passwordInput = c}
                       onChangeText={(text) => {
                         this.setState({
                           password: text
@@ -127,18 +165,20 @@ export default class AnatomyExample extends Component {
                   </Item>
                 </Form>
                 <Container style={{
-                  paddingHorizontal: 45
+                  paddingHorizontal: 45,
+                  backgroundColor: '#a6003c'
+
                 }}>
                   <Button
                     block
-                    success
-                    rounded
                     style={{
                       marginTop: 40,
+                      borderRadius: 5,
+                      backgroundColor: '#00a66a'
                     }}
                     onPress={() => { this.submitForm() }}
                   >
-                    <Text>submit</Text>
+                    <Text>Submit</Text>
                   </Button>
                 </Container>
               </Container>
@@ -146,7 +186,14 @@ export default class AnatomyExample extends Component {
           </Content>
           <Footer>
             <FooterTab>
-              <Button full light onPress={() => this.props.navigation.navigate('Login')}>
+              <Button
+                full
+                light
+                onPress={() => this.props.navigation.navigate('Login')}
+                style={{
+                  backgroundColor: '#f8fbf5'
+                }}
+              >
                 <Text
                   uppercase={false}>Been here before? Login</Text>
               </Button>

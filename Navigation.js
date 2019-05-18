@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 
 import Login from './containers/Login'
 import Register from './containers/Register'
+import Chat from './containers/Chat'
 
 const RootStack = createStackNavigator({
   Login: {
@@ -12,12 +13,15 @@ const RootStack = createStackNavigator({
   Register: {
     screen: Register
   },
+  Chat: {
+    screen: Chat
+  }
 }, {
     headerMode: 'none',
     navigationOptions: {
         headerVisible: false,
     },
-    initialRouteName: 'Login',
+    initialRouteName: 'Chat',
   }
 )
 
