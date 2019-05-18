@@ -1,5 +1,5 @@
-import React from "react";
-import { createBottomTabNavigator, createStackNavigator, createAppContainer } from "react-navigation";
+import React from "react"
+import { createBottomTabNavigator, createStackNavigator, createAppContainer } from "react-navigation"
 import Icon from 'react-native-vector-icons/MaterialIcons'
 
 import Login from './containers/Login'
@@ -21,7 +21,7 @@ const RootStack = createStackNavigator({
     navigationOptions: {
         headerVisible: false,
     },
-    initialRouteName: 'Chat',
+    initialRouteName: 'Login',
   }
 )
 
