@@ -37,6 +37,7 @@ import {
     Item,
     Thumbnail
 } from 'native-base'
+import axios from 'axios'
 
 const BOT_USER = {
     _id: 2,
@@ -80,6 +81,18 @@ export default class Chat extends React.Component {
 
     handleGoogleResponse(result) {
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
+        let code
+        if (result.queryResult.fulfillmentMessages[1]) {
+            code = result.queryResult.fulfillmentMessages[1].payload.code
+            axios
+                .post('http://10.0.2.2:3000/action', {code})
+                .then(({data}) => {
+                    console.log(data)
+                })
+                .catch(err => {
+                    console.log(err)
+                })
+        }
         this.sendBotResponse(text)
     }
 
