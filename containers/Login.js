@@ -23,8 +23,8 @@ import { connect } from 'react-redux'
 
 class Login extends Component {
   state = {
-    email: 'afit@mail.com',
-    password: '123456',
+    email: '',
+    password: '',
     token: '',
     clicked: false
   }
@@ -43,7 +43,6 @@ class Login extends Component {
 
   getToken = async () => {
     try {
-
       const { status: existingStatus } = await Permissions.getAsync(
         Permissions.NOTIFICATIONS
       )

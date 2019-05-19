@@ -34,16 +34,25 @@ class Register extends Component {
   state = {
     name: '',
     email: '',
-    password: ''
+    password: '',
+    token: '',
   }
 
-  submitForm = async () => {
+  componentDidMount() {
+    this.getToken()
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.props.auth.loggedInUser !== null) {
+      this.props.navigation.navigate('Chat')
+    }
+  }
+
+  getToken = async () => {
     try {
-      const { name, email, password } = this.state
-      console.log(this.state)
       const { status: existingStatus } = await Permissions.getAsync(
         Permissions.NOTIFICATIONS
-        )
+      )
       let finalStatus = existingStatus
 
       if (existingStatus !== 'granted') {
@@ -56,6 +65,17 @@ class Register extends Component {
       }
 
       let token = await Notifications.getExpoPushTokenAsync()
+      this.setState({
+        token
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  submitForm = async () => {
+    try {
+      const { name, email, password, token } = this.state
 
       await this.props.register({
         name,
@@ -64,16 +84,9 @@ class Register extends Component {
         expoNotificationToken: token
       })
 
-      if(this.props.loggedInUser !== null){
-        console.log('register success')
-        this.props.navigation.navigate('Chat')
-      }else {
-        console.log('login error')
-      }
     } catch (err) {
       console.log(err)
     }
-
   }
 
   render() {
