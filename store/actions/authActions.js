@@ -24,7 +24,6 @@ export const login = user => {
   return (dispatch, getState) => {
     Axios.post(baseUrl + '/users/login', user)
     .then(({ data }) => {
-      console.log(data, "<== data")
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: data
