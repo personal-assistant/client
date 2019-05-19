@@ -13,7 +13,6 @@ import {
 import { Constants, ImagePicker, Permissions, Notifications } from 'expo'
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
-import InfoCard from '../components/InfoCard'
 import {
     Container,
     Header,
@@ -38,7 +37,11 @@ import {
     Thumbnail
 } from 'native-base'
 import axios from 'axios'
-import { Platform } from 'react-native';
+import { Platform } from 'react-native'
+import { connect } from 'react-redux'
+import FoodContainer from '../components/FoodContainer'
+
+
 const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 
 const BOT_USER = {
@@ -50,24 +53,18 @@ const BUTTONS = ["Camera", "Album", "Cancel"];
 const DESTRUCTIVE_INDEX = 3;
 const CANCEL_INDEX = 4;
 
-export default class Chat extends React.Component {
+class Chat extends React.Component {
     state = {
-        messages: [
-            {
-                _id: 1,
-                text: `halo! ada yang bisa kubantu?`,
-                createdAt: new Date(),
-                user: BOT_USER
-            }
-        ],
+        messages: [],
         showContainer: false,
-        datas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        apiData: {},
         clicked: '',
         image: null,
         uploading: false
     }
 
     async componentDidMount() {
+
         Dialogflow_V2.setConfiguration(
             dialogflowConfig.client_email,
             dialogflowConfig.private_key,
@@ -87,9 +84,24 @@ export default class Chat extends React.Component {
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             axios
-                .post(baseUrl + '/action', {code})
-                .then(({data}) => {
-                    console.log(data)
+                .post(baseUrl + '/action', {
+                    code
+                }, {
+                        headers: {
+                            authorization: this.props.auth.loggedInUser.token
+                        }
+                    })
+                .then(({ data }) => {
+                    console.log(data.code)
+                    if (data.code === 'food' || data.code === 'movie') {
+                        this.setState({
+                            apiData: data
+                        }, () => {
+                            console.log('masokkkkkkkkkkk')
+                            this.containerOpen()
+                        })
+
+                    }
                 })
                 .catch(err => {
                     console.log(err)
@@ -112,10 +124,6 @@ export default class Chat extends React.Component {
     }
 
     onSend(messages = []) {
-        if (messages[0].text.includes('makan')) {
-            this.containerHandler()
-        }
-
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages)
         }))
@@ -146,9 +154,15 @@ export default class Chat extends React.Component {
         )
     }
 
-    containerHandler = () => {
-        Keyboard.dismiss()
-        this.setState({ showContainer: !this.state.showContainer })
+    containerOpen = () => {
+        console.log('masok container openn bosque')
+        let { apiData } = this.state
+        console.log('ni api data nyaaaa', apiData)
+        if (apiData.data) {
+            console.log('opening container...')
+            Keyboard.dismiss()
+            this.setState({ showContainer: !this.state.showContainer })
+        }
     }
 
     containerClose = () => {
@@ -169,9 +183,9 @@ export default class Chat extends React.Component {
                             destructiveButtonIndex: DESTRUCTIVE_INDEX,
                         },
                         buttonIndex => {
-                            if(buttonIndex === 0) {
+                            if (buttonIndex === 0) {
                                 this.openCamera()
-                            } else if(buttonIndex === 1) {
+                            } else if (buttonIndex === 1) {
                                 this.openAlbum()
                             }
                         }
@@ -191,73 +205,73 @@ export default class Chat extends React.Component {
         console.log('open camera !!')
         const {
             status: cameraPerm
-          } = await Permissions.askAsync(Permissions.CAMERA);
-      
-          const {
+        } = await Permissions.askAsync(Permissions.CAMERA);
+
+        const {
             status: cameraRollPerm
-          } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-          // only if user allows permission to camera AND camera roll
-          if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
+        } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+        // only if user allows permission to camera AND camera roll
+        if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              aspect: [4, 3],
+                allowsEditing: true,
+                aspect: [4, 3],
             });
-      
+
             this._handleImagePicked(pickerResult);
-          }
+        }
     }
 
     openAlbum = async () => {
         console.log('open album !!')
         const {
             status: cameraRollPerm
-          } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
-      
-          // only if user allows permission to camera roll
-          if (cameraRollPerm === 'granted') {
+        } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+        if (cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchImageLibraryAsync({
-              allowsEditing: true,
-              aspect: [4, 3],
+                allowsEditing: true,
+                aspect: [4, 3],
             });
-      
+
             this._handleImagePicked(pickerResult);
-          }
+        }
     }
 
     _handleImagePicked = async pickerResult => {
         let uploadResponse, uploadResult;
-    
+        console.log('====ini auth====', this.props)
         try {
-          this.setState({
-            uploading: true
-          });
-    
-          if (!pickerResult.cancelled) {
-            uploadResponse = await uploadImageAsync(pickerResult.uri);
-            uploadResult = await uploadResponse.json();
-    
             this.setState({
-              image: uploadResult.imagePath
+                uploading: true
             });
-          }
-        } catch (e) {
-          console.log({ uploadResponse });
-          console.log({ uploadResult });
-          console.log({ e });
-          alert('Upload failed, sorry :(');
-        } finally {
-          this.setState({
-            uploading: false
-          });
-        }
-      };
 
-      
-    
+            if (!pickerResult.cancelled) {
+                console.log('==token====', this.props.auth.loggedInUser.token)
+                uploadResponse = await uploadImageAsync(pickerResult.uri)
+                uploadResult = await uploadResponse.json();
+                console.log('===upload result====', uploadResult)
+                this.setState({
+                    image: uploadResult.imageUrl
+                });
+            }
+        } catch (e) {
+            console.log({ uploadResponse });
+            console.log({ uploadResult });
+            console.log({ e });
+            alert('Upload failed, sorry :(');
+        } finally {
+            this.setState({
+                uploading: false
+            });
+        }
+    };
+
+
+
 
     render() {
-        const { showContainer, datas } = this.state
+        const { showContainer, apiData } = this.state
         return (
             <Root>
                 <KeyboardAvoidingView
@@ -285,23 +299,7 @@ export default class Chat extends React.Component {
                     />
                     {
                         showContainer ? (
-                            <View style={{
-                                height: 250,
-                            }}>
-                                <ScrollView
-                                    contentContainerStyle={{
-                                        alignItems: 'center',
-                                    }}
-                                    horizontal={true}
-                                >
-                                    {
-                                        datas.map((e, index) => {
-                                            return <InfoCard key={index} />
-                                        })
-                                    }
-
-                                </ScrollView>
-                            </View>
+                            <FoodContainer apiData={apiData} />
                         ) : null
                     }
                 </KeyboardAvoidingView>
@@ -310,26 +308,36 @@ export default class Chat extends React.Component {
     }
 }
 
-async function uploadImageAsync(uri) {
+async function uploadImageAsync(uri, token) {
     let uriParts = uri.split('.');
     let fileType = uriParts[uriParts.length - 1]
-  
+
     let formData = new FormData();
     formData.append('photo', {
-      uri,
-      name: `photo.${fileType}`,
-      type: `image/${fileType}`,
+        uri,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
     });
     formData.append('code', 'photo')
-  
+
     let options = {
-      method: 'POST',
-      body: formData,
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'multipart/form-data',
-      },
+        method: 'POST',
+        body: formData,
+        headers: {
+            Accept: 'application/json',
+            'Content-Type': 'multipart/form-data',
+            authorization: token
+        },
     };
-  
+
     return fetch('http://10.0.2.2:3000/action', options)
 }
+
+
+const mapStateToProps = state => {
+    return {
+        auth: state.auth
+    }
+}
+
+export default connect(mapStateToProps, null)(Chat)

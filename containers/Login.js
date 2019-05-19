@@ -23,14 +23,27 @@ import { connect } from 'react-redux'
 
 class Login extends Component {
   state = {
-    email: '',
-    password: ''
+    email: 'afit@mail.com',
+    password: '123456',
+    token: '',
+    clicked: false
   }
 
-  submitForm = async () => {
-    console.log('masok', this.state)
+  componentDidMount() {
+    this.getToken()
+    this.submitForm()
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if(this.props.auth.loggedInUser !== null) {
+      this.props.navigation.navigate('Chat')
+    }
+    
+  }
+
+  getToken = async () => {
     try {
-      const { email, password } = this.state
+
       const { status: existingStatus } = await Permissions.getAsync(
         Permissions.NOTIFICATIONS
       )
@@ -46,19 +59,23 @@ class Login extends Component {
       }
 
       let token = await Notifications.getExpoPushTokenAsync()
+      this.setState({
+        token
+      })
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  submitForm = async () => {
+    try {
+      const { email, password, token } = this.state
 
       await this.props.login({
         email,
         password,
         expoNotificationToken: token
       })
-
-      if(this.props.loggedInUser !== null){
-        console.log('login success')
-        this.props.navigation.navigate('Chat')
-      }else {
-        console.log('login error')
-      }
 
     } catch (err) {
       console.log(err)
