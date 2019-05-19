@@ -31,6 +31,7 @@ class Login extends Component {
 
   componentDidMount() {
     this.getToken()
+    this.submitForm()
   }
 
   componentDidUpdate(prevProps, prevState) {
