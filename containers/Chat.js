@@ -38,6 +38,8 @@ import {
     Thumbnail
 } from 'native-base'
 import axios from 'axios'
+import { Platform } from 'react-native';
+const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 
 const BOT_USER = {
     _id: 2,
@@ -85,7 +87,7 @@ export default class Chat extends React.Component {
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             axios
-                .post('http://10.0.2.2:3000/action', {code})
+                .post(baseUrl + '/action', {code})
                 .then(({data}) => {
                     console.log(data)
                 })
