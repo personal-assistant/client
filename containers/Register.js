@@ -27,9 +27,10 @@ import {
   Item,
   Thumbnail
 } from 'native-base';
+import { register } from '../store/actions/authActions'
+import { connect } from 'react-redux'
 
-
-export default class AnatomyExample extends Component {
+class Register extends Component {
   state = {
     name: '',
     email: '',
@@ -55,15 +56,20 @@ export default class AnatomyExample extends Component {
       }
 
       let token = await Notifications.getExpoPushTokenAsync()
-      console.log('masok 2', token)
-      await axios.post('/users/register', {
+
+      await this.props.register({
         name,
         email,
         password,
         expoNotificationToken: token
       })
-      console.log('register success')
-      this.props.navigation.navigate('Login')
+
+      if(this.props.loggedInUser !== null){
+        console.log('register success')
+        this.props.navigation.navigate('Chat')
+      }else {
+        console.log('login error')
+      }
     } catch (err) {
       console.log(err)
     }
@@ -80,7 +86,8 @@ export default class AnatomyExample extends Component {
         style={{
           flex: 1,
           paddingTop: Constants.statusBarHeight,
-        }}>
+        }}
+      >
         <Container style={{ backgroundColor: "white" }}>
           <Content>
             <Container>
@@ -117,7 +124,7 @@ export default class AnatomyExample extends Component {
                       borderRadius: 5
                     }}>
                     <Input
-                      placeholder="name"
+                      placeholder="Name"
                       onSubmitEditing={() => { this.emailInput._root.focus() }}
                       returnKeyType={"next"}
                       onChangeText={(text) => {
@@ -135,7 +142,7 @@ export default class AnatomyExample extends Component {
                       marginTop: 10
                     }}>
                     <Input
-                      placeholder="email"
+                      placeholder="E-mail"
                       returnKeyType={"next"}
                       ref={c => this.emailInput = c}
                       onSubmitEditing={() => this._passwordInput._root.focus()}
@@ -154,7 +161,8 @@ export default class AnatomyExample extends Component {
                       marginTop: 10
                     }}>
                     <Input
-                      placeholder="password"
+                      secureTextEntry={true}
+                      placeholder="Password"
                       ref={c => this._passwordInput = c}
                       onChangeText={(text) => {
                         this.setState({
@@ -204,3 +212,17 @@ export default class AnatomyExample extends Component {
     )
   }
 }
+
+const mapStateToProps = state => {
+  return {
+    auth: state.auth
+  }
+}
+
+const mapDispatchToProps = dispatch => {
+  return {
+    register: newUser => dispatch(register(newUser))
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Register)

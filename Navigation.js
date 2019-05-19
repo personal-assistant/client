@@ -21,7 +21,7 @@ const RootStack = createStackNavigator({
     navigationOptions: {
         headerVisible: false,
     },
-    initialRouteName: 'Chat',
+    initialRouteName: 'Login',
   }
 )
 

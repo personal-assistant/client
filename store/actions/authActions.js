@@ -1,12 +1,10 @@
 import Axios from 'axios'
+import { Platform } from 'react-native';
+const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 
-export const signUp = newUser => {
-  return async (dispatch, getState) => {
-    Axios.post('http://localhost:3000/users/register', {
-      name: newUser.name,
-      email: newUser.email,
-      password: newUser.password
-    })
+export const register = newUser => {
+  return (dispatch, getState) => {
+    Axios.post(baseUrl + '/users/register', newUser)
     .then(({ data }) => {
       dispatch({
         type: 'REGISTER_SUCCESS',
@@ -22,13 +20,11 @@ export const signUp = newUser => {
   }
 }
 
-export const signIn = user => {
+export const login = user => {
   return (dispatch, getState) => {
-    Axios.post('http://localhost:3000/users/login', {
-      email: user.email,
-      password: user.password
-    })
+    Axios.post(baseUrl + '/users/login', user)
     .then(({ data }) => {
+      console.log(data, "<== data")
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: data
