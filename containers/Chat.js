@@ -10,7 +10,7 @@ import {
     ScrollView,
     TouchableOpacity
 } from "react-native"
-import { Constants } from 'expo'
+import { Constants, ImagePicker, Permissions, Notifications } from 'expo'
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
 import InfoCard from '../components/InfoCard'
@@ -59,7 +59,9 @@ export default class Chat extends React.Component {
         ],
         showContainer: false,
         datas: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        clicked: ''
+        clicked: '',
+        image: null,
+        uploading: false
     }
 
     async componentDidMount() {
@@ -69,6 +71,11 @@ export default class Chat extends React.Component {
             "id",
             dialogflowConfig.project_id
         )
+
+        let result = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+        if (result.status === 'granted') {
+            console.log('Notification permissions granted.')
+        }
     }
 
     handleGoogleResponse(result) {
@@ -165,13 +172,74 @@ export default class Chat extends React.Component {
         )
     }
 
-    openCamera = () => {
+    openCamera = async () => {
         console.log('open camera !!')
+        const {
+            status: cameraPerm
+          } = await Permissions.askAsync(Permissions.CAMERA);
+      
+          const {
+            status: cameraRollPerm
+          } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+      
+          // only if user allows permission to camera AND camera roll
+          if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
+            let pickerResult = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+            });
+      
+            this._handleImagePicked(pickerResult);
+          }
     }
 
-    openAlbum = () => {
+    openAlbum = async () => {
         console.log('open album !!')
+        const {
+            status: cameraRollPerm
+          } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+      
+          // only if user allows permission to camera roll
+          if (cameraRollPerm === 'granted') {
+            let pickerResult = await ImagePicker.launchImageLibraryAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+            });
+      
+            this._handleImagePicked(pickerResult);
+          }
     }
+
+    _handleImagePicked = async pickerResult => {
+        let uploadResponse, uploadResult;
+    
+        try {
+          this.setState({
+            uploading: true
+          });
+    
+          if (!pickerResult.cancelled) {
+            uploadResponse = await uploadImageAsync(pickerResult.uri);
+            uploadResult = await uploadResponse.json();
+    
+            this.setState({
+              image: uploadResult.imagePath
+            });
+          }
+        } catch (e) {
+          console.log({ uploadResponse });
+          console.log({ uploadResult });
+          console.log({ e });
+          alert('Upload failed, sorry :(');
+        } finally {
+          this.setState({
+            uploading: false
+          });
+        }
+      };
+
+      
+    
 
     render() {
         const { showContainer, datas } = this.state
@@ -225,4 +293,28 @@ export default class Chat extends React.Component {
             </Root>
         )
     }
+}
+
+async function uploadImageAsync(uri) {
+    let uriParts = uri.split('.');
+    let fileType = uriParts[uriParts.length - 1]
+  
+    let formData = new FormData();
+    formData.append('photo', {
+      uri,
+      name: `photo.${fileType}`,
+      type: `image/${fileType}`,
+    });
+    formData.append('code', 'photo')
+  
+    let options = {
+      method: 'POST',
+      body: formData,
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+  
+    return fetch('http://10.0.2.2:3000/action', options)
 }
