@@ -76,6 +76,7 @@ class Register extends Component {
   submitForm = async () => {
     try {
       const { name, email, password, token } = this.state
+      console.log(this.state)
 
       await this.props.register({
         name,

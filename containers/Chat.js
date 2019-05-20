@@ -6,11 +6,14 @@ import {
     Alert,
     Image,
     Keyboard,
+    SafeAreaView,
     KeyboardAvoidingView,
+    StatusBar,
     ScrollView,
     TouchableOpacity
 } from "react-native"
 import { Constants, ImagePicker, Permissions, Notifications } from 'expo'
+import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
 import {
@@ -40,7 +43,9 @@ import axios from 'axios'
 import { Platform } from 'react-native'
 import { connect } from 'react-redux'
 import FoodContainer from '../components/FoodContainer'
-
+import firebase from '../serverAPI/firebaseConfig'
+import * as Progress from 'react-native-progress'
+import HSLtoHex from '../helpers/HSLtoHex'
 
 const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 
@@ -60,10 +65,46 @@ class Chat extends React.Component {
         apiData: {},
         clicked: '',
         image: null,
-        uploading: false
+        uploading: false,
+        relationshipPoint: 0,
+        color: {
+            h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 2 * 1.35),
+            s: 100,
+            l: 39
+        },
+        chatLoaded: false
     }
 
     async componentDidMount() {
+        console.log('componet did mount!', new Date())
+        let chatHistory = []
+
+        firebase
+            .firestore()
+            .collection('users')
+            .doc(this.props.auth.loggedInUser.user._id)
+            .collection('messages')
+            .orderBy('createdAt', 'desc')
+            .get()
+            .then(snapshots => {
+                snapshots.forEach(doc => {
+                    let newDoc = { ...doc.data(), createdAt: doc.data().createdAt.toDate() }
+                    chatHistory.push(newDoc)
+                })
+                this.setState({
+                    messages: chatHistory,
+                    chatLoaded: true
+                })
+            })
+            .catch(err => {
+                console.log(err)
+            })
+
+        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100 * 2).toFixed(2)
+        this.setState({
+            relationshipPoint: point
+        })
+        console.log('=====relationshipppppp=====', this.props.auth.loggedInUser.user.relationshipPoint)
 
         Dialogflow_V2.setConfiguration(
             dialogflowConfig.client_email,
@@ -79,29 +120,40 @@ class Chat extends React.Component {
     }
 
     handleGoogleResponse(result) {
+        let { relationshipPoint, color } = this.state
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
         let code
+        let point
+
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
+            point = result.queryResult.fulfillmentMessages[1].payload.point
             axios
                 .post(baseUrl + '/action', {
-                    code
+                    code,
+                    relationshipPoint: point
                 }, {
                         headers: {
                             authorization: this.props.auth.loggedInUser.token
                         }
                     })
                 .then(({ data }) => {
-                    console.log(data.code)
+                    console.log('==ini data===', data)
                     if (data.code === 'food' || data.code === 'movie') {
                         this.setState({
                             apiData: data
                         }, () => {
-                            console.log('masokkkkkkkkkkk')
                             this.containerOpen()
                         })
-
                     }
+                    let point = (data.relationshipPoint / 100 * 2).toFixed(2)
+                    this.setState({
+                        relationshipPoint: point,
+                        color: {
+                            ...color,
+                            h: Math.round(data.relationshipPoint * 2 * 1.35)
+                        }
+                    })
                 })
                 .catch(err => {
                     console.log(err)
@@ -121,12 +173,20 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, [msg])
         }))
+
+        firebase
+            .firestore()
+            .collection('users')
+            .doc(this.props.auth.loggedInUser.user._id)
+            .collection('messages')
+            .add(msg)
     }
 
     onSend(messages = []) {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages)
         }))
+        console.log('==ini message====', messages)
 
         let message = messages[0].text
         Dialogflow_V2.requestQuery(
@@ -134,6 +194,14 @@ class Chat extends React.Component {
             result => this.handleGoogleResponse(result),
             error => console.log(error)
         )
+
+        firebase
+            .firestore()
+            .collection('users')
+            .doc(this.props.auth.loggedInUser.user._id)
+            .collection('messages')
+            .add(messages[0])
+
     }
 
     renderBubble = (props) => {
@@ -155,7 +223,6 @@ class Chat extends React.Component {
     }
 
     containerOpen = () => {
-        console.log('masok container openn bosque')
         let { apiData } = this.state
         console.log('ni api data nyaaaa', apiData)
         if (apiData.data) {
@@ -239,6 +306,7 @@ class Chat extends React.Component {
     }
 
     _handleImagePicked = async pickerResult => {
+
         let uploadResponse, uploadResult;
         console.log('====ini auth====', this.props)
         try {
@@ -248,7 +316,7 @@ class Chat extends React.Component {
 
             if (!pickerResult.cancelled) {
                 console.log('==token====', this.props.auth.loggedInUser.token)
-                uploadResponse = await uploadImageAsync(pickerResult.uri)
+                uploadResponse = await uploadImageAsync(pickerResult.uri, this.props.auth.loggedInUser.token)
                 uploadResult = await uploadResponse.json();
                 console.log('===upload result====', uploadResult)
                 this.setState({
@@ -265,13 +333,32 @@ class Chat extends React.Component {
                 uploading: false
             });
         }
-    };
+    }
 
+    getColor = () => {
+        return this.HSLToHex()
+    }
 
 
 
     render() {
-        const { showContainer, apiData } = this.state
+        const { showContainer, apiData, relationshipPoint, color, chatLoaded } = this.state
+
+        if (!chatLoaded) {
+            return (
+                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
+                <Image
+                  source={require('../assets/loading.gif')}
+                  style={{
+                    width: 144,
+                    height: 95
+                  }}
+                />
+                <Text style={{marginTop: 10, fontSize: 30}}>Loading...</Text>
+                </View>
+            )
+        }
+
         return (
             <Root>
                 <KeyboardAvoidingView
@@ -281,8 +368,73 @@ class Chat extends React.Component {
                     scrollEnabled={false}
                     style={{
                         flex: 1,
-                        paddingTop: Constants.statusBarHeight,
                     }}>
+                    <Header
+                        style={{
+                            height: 100,
+                            marginTop: StatusBar.currentHeight,
+                            backgroundColor: 'white'
+                        }}
+                    >
+                        <View style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <View style={{
+                                flex: 3,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'white'
+                            }}>
+
+                                <Image
+                                    source={require('../assets/eve3.gif')}
+                                    style={{
+                                        width: 100,
+                                        height: 100
+                                    }}
+                                />
+
+                            </View>
+                            <View style={{
+                                flex: 9,
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: 'white'
+                            }}>
+                                <View style={{
+                                    flex: 1,
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}>
+
+                                    <MaterialIcons
+                                        name="favorite"
+                                        size={25}
+                                        color="#f00058"
+                                        style={{
+                                            marginRight: 6
+                                        }}
+                                    />
+
+                                    <Progress.Bar
+                                        progress={relationshipPoint}
+                                        animated={true}
+                                        width={180}
+                                        height={10}
+                                        color={HSLtoHex(color.h, color.s, color.l)}
+                                        unfilledColor='#d4d4d4'
+                                        borderColor='white'
+                                    />
+
+                                </View>
+
+                            </View>
+                        </View>
+                    </Header>
                     <GiftedChat
                         messages={this.state.messages}
                         isAnimated={true}
