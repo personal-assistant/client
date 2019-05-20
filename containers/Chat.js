@@ -51,6 +51,11 @@ import HSLtoHex from '../helpers/HSLtoHex'
 console.disableYellowBox = true
 // const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 const baseUrl = 'http://35.247.157.227'
+import eve1 from '../assets/eve.gif'
+import eve2 from '../assets/eve2.gif'
+import eve3 from '../assets/eve3.gif'
+import test from '../assets/test.gif'
+import testgif from '../assets/loading.gif'
 
 const BOT_USER = {
     _id: 2,
@@ -75,10 +80,35 @@ class Chat extends React.Component {
             s: 100,
             l: 39
         },
-        chatLoaded: false
+        chatLoaded: false,
+        emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
+        avatarImage: test
     }
 
-    async componentDidMount() {
+    componentDidUpdate(prevProps, prevState) {
+        if (this.state.avatarImage !== prevState.avatarImage) {
+          this.renderAvatar()
+        }
+    }
+
+    renderAvatar = () => {
+        switch (this.state.emotion) {
+            case 'blushing':
+                this.setState({
+                    avatarImage: eve2
+                })
+                break;
+            case 'neutral':
+                this.setState({
+                    avatarImage: testgif
+                })
+            break;
+            default:
+                break;
+        }
+    }
+
+    componentDidMount = async () => {
         console.log('componet did mount!', new Date())
         let chatHistory = []
 
@@ -140,6 +170,8 @@ class Chat extends React.Component {
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
+            emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
+
             if (code === 'reminder') {
                 this.handleDatePicker()
             } else {
@@ -167,7 +199,8 @@ class Chat extends React.Component {
                             color: {
                                 ...color,
                                 h: Math.round(data.relationshipPoint * 1.35)
-                            }
+                            },
+                            emotion
                         })
                     })
                     .catch(err => {
@@ -411,7 +444,7 @@ class Chat extends React.Component {
 
 
     render() {
-        const { showContainer, apiData, relationshipPoint, color, chatLoaded } = this.state
+        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage } = this.state
 
         if (!chatLoaded) {
             return (
@@ -459,7 +492,7 @@ class Chat extends React.Component {
                             }}>
 
                                 <Image
-                                    source={require('../assets/eve3.gif')}
+                                    source={avatarImage}
                                     style={{
                                         width: 100,
                                         height: 100
