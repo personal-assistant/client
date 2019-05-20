@@ -6,6 +6,7 @@ import Navigation from './Navigation'
 import { Container } from 'native-base'
 import store from './store'
 import { YellowBox } from 'react-native';
+console.disableYellowBox = true
 
 export default class App extends React.Component {
   state = {
@@ -13,7 +14,7 @@ export default class App extends React.Component {
   }
 
   componentWillMount() {
-    YellowBox.ignoreWarnings(['Setting a timer for a long'])
+    YellowBox.ignoreWarnings(['Setting a timer'])
   }
   
 
