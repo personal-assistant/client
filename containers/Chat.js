@@ -10,7 +10,9 @@ import {
     KeyboardAvoidingView,
     StatusBar,
     ScrollView,
-    TouchableOpacity
+    TouchableOpacity,
+    DatePickerAndroid,
+    TimePickerAndroid
 } from "react-native"
 import { Constants, ImagePicker, Permissions, Notifications } from 'expo'
 import { MaterialIcons } from '@expo/vector-icons';
@@ -46,8 +48,9 @@ import FoodContainer from '../components/FoodContainer'
 import firebase from '../serverAPI/firebaseConfig'
 import * as Progress from 'react-native-progress'
 import HSLtoHex from '../helpers/HSLtoHex'
-
-const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
+console.disableYellowBox = true
+// const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
+const baseUrl = 'http://35.247.157.227'
 
 const BOT_USER = {
     _id: 2,
@@ -68,7 +71,7 @@ class Chat extends React.Component {
         uploading: false,
         relationshipPoint: 0,
         color: {
-            h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 2 * 1.35),
+            h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
             l: 39
         },
@@ -100,11 +103,20 @@ class Chat extends React.Component {
                 console.log(err)
             })
 
-        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100 * 2).toFixed(2)
+        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100).toFixed(2)
         this.setState({
             relationshipPoint: point
         })
         console.log('=====relationshipppppp=====', this.props.auth.loggedInUser.user.relationshipPoint)
+
+        if (Platform.OS === 'android') {
+            Expo.Notifications.createChannelAndroidAsync('reminders', {
+                name: 'Reminders',
+                priority: 'high',
+                vibrate: true,
+                sound: true
+            });
+        }
 
         Dialogflow_V2.setConfiguration(
             dialogflowConfig.client_email,
@@ -128,36 +140,40 @@ class Chat extends React.Component {
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
-            axios
-                .post(baseUrl + '/action', {
-                    code,
-                    relationshipPoint: point
-                }, {
-                        headers: {
-                            authorization: this.props.auth.loggedInUser.token
-                        }
-                    })
-                .then(({ data }) => {
-                    console.log('==ini data===', data)
-                    if (data.code === 'food' || data.code === 'movie') {
-                        this.setState({
-                            apiData: data
-                        }, () => {
-                            this.containerOpen()
+            if (code === 'reminder') {
+                this.handleDatePicker()
+            } else {
+                axios
+                    .post(baseUrl + '/action', {
+                        code,
+                        relationshipPoint: point
+                    }, {
+                            headers: {
+                                authorization: this.props.auth.loggedInUser.token
+                            }
                         })
-                    }
-                    let point = (data.relationshipPoint / 100 * 2).toFixed(2)
-                    this.setState({
-                        relationshipPoint: point,
-                        color: {
-                            ...color,
-                            h: Math.round(data.relationshipPoint * 2 * 1.35)
+                    .then(({ data }) => {
+                        console.log('==ini data===', data)
+                        if (data.code === 'food' || data.code === 'movie') {
+                            this.setState({
+                                apiData: data
+                            }, () => {
+                                this.containerOpen()
+                            })
                         }
+                        let point = (data.relationshipPoint / 100).toFixed(2)
+                        this.setState({
+                            relationshipPoint: point,
+                            color: {
+                                ...color,
+                                h: Math.round(data.relationshipPoint * 1.35)
+                            }
+                        })
                     })
-                })
-                .catch(err => {
-                    console.log(err)
-                })
+                    .catch(err => {
+                        console.log(err)
+                    })
+            }
         }
         this.sendBotResponse(text)
     }
@@ -281,8 +297,9 @@ class Chat extends React.Component {
         // only if user allows permission to camera AND camera roll
         if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchCameraAsync({
-                allowsEditing: true,
-                aspect: [4, 3],
+                // allowsEditing: true,
+                // aspect: [4, 3],
+                quality: 0.3
             });
 
             this._handleImagePicked(pickerResult);
@@ -297,8 +314,9 @@ class Chat extends React.Component {
 
         if (cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchImageLibraryAsync({
-                allowsEditing: true,
-                aspect: [4, 3],
+                // allowsEditing: true,
+                // aspect: [4, 3],
+                quality: 0.3
             });
 
             this._handleImagePicked(pickerResult);
@@ -334,6 +352,57 @@ class Chat extends React.Component {
             });
         }
     }
+
+    async handleDatePicker() {
+        try {
+        let {action, year, month, day} = await DatePickerAndroid.open({
+            date: new Date(),
+            minDate: new Date()
+        });
+        
+        if (action !== DatePickerAndroid.dismissedAction) {
+            let {action, hour, minute} = await TimePickerAndroid.open({
+                hour: 14,
+                minute: 0,
+                is24Hour: true
+            });
+            if (action !== TimePickerAndroid.dismissedAction) {
+                this.scheduleNotification(new Date(year, month, day, hour, minute))
+            } else {
+                this.sendBotResponse('ngga jadi ya, yaudah deh')
+            }
+        } else {
+            this.sendBotResponse('ngga jadi ya, yaudah deh')
+        }
+        } catch ({code, message}) {
+        console.warn('Cannot open date picker', message);
+        }
+    }
+
+    scheduleNotification = async (userInput) => {
+        const alarm = new Date(userInput).getTime()
+        const timeNow = new Date().getTime()
+    
+        const timer = alarm - timeNow
+        let notificationId = await Notifications.scheduleLocalNotificationAsync(
+          {
+            title: "Reminder",
+            body: "Wow, I can show up even when app is closed",
+            android: {
+                channelId: 'reminders',
+                color: '#FF0000'
+            }
+          },
+          {
+            // repeat: "minute",
+            time: new Date().getTime() + timer
+          }
+        );
+        setTimeout(() => {
+            this.sendBotResponse('Kamu punya reminder!')
+        }, timer);
+        console.log(notificationId);
+    };
 
     getColor = () => {
         return this.HSLToHex()
@@ -421,7 +490,7 @@ class Chat extends React.Component {
                                     />
 
                                     <Progress.Bar
-                                        progress={relationshipPoint}
+                                        progress={Number(relationshipPoint)}
                                         animated={true}
                                         width={180}
                                         height={10}
@@ -482,7 +551,7 @@ async function uploadImageAsync(uri, token) {
         },
     };
 
-    return fetch('http://10.0.2.2:3000/action', options)
+    return fetch('http://35.247.157.227/action', options)
 }
 
 
