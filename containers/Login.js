@@ -23,8 +23,8 @@ import { connect } from 'react-redux'
 
 class Login extends Component {
   state = {
-    email: '',
-    password: '',
+    email: 'afit@mail.com',
+    password: '123456',
     token: '',
     clicked: false
   }
@@ -35,10 +35,9 @@ class Login extends Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if(this.props.auth.loggedInUser !== null) {
+    if (this.props.auth.loggedInUser !== null) {
       this.props.navigation.navigate('Chat')
     }
-    
   }
 
   getToken = async () => {

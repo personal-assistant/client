@@ -11,13 +11,14 @@ import {
     CardItem,
     Text,
 } from 'native-base'
+import { WebBrowser } from 'expo'
 
 export default class infoCard extends Component {
 
     render() {
         const { title, image, link } = this.props
         return (
-            <TouchableOpacity onPress={() => Linking.openURL(link)}>
+            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(link)}>
                 <Card style={{
                     width: 200,
                     height: 200,

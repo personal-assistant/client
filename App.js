@@ -5,11 +5,17 @@ import { Ionicons } from '@expo/vector-icons';
 import Navigation from './Navigation'
 import { Container } from 'native-base'
 import store from './store'
+import { YellowBox } from 'react-native';
 
 export default class App extends React.Component {
   state = {
     fontLoaded: false,
-  };
+  }
+
+  componentWillMount() {
+    YellowBox.ignoreWarnings(['Setting a timer for a long'])
+  }
+  
 
   async componentDidMount() {
     await Font.loadAsync({
