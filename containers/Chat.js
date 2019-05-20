@@ -71,7 +71,7 @@ class Chat extends React.Component {
         uploading: false,
         relationshipPoint: 0,
         color: {
-            h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 2 * 1.35),
+            h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
             l: 39
         },
@@ -103,7 +103,7 @@ class Chat extends React.Component {
                 console.log(err)
             })
 
-        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100 * 2).toFixed(2)
+        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100).toFixed(2)
         this.setState({
             relationshipPoint: point
         })
@@ -161,12 +161,12 @@ class Chat extends React.Component {
                                 this.containerOpen()
                             })
                         }
-                        let point = (data.relationshipPoint / 100 * 2).toFixed(2)
+                        let point = (data.relationshipPoint / 100).toFixed(2)
                         this.setState({
                             relationshipPoint: point,
                             color: {
                                 ...color,
-                                h: Math.round(data.relationshipPoint * 2 * 1.35)
+                                h: Math.round(data.relationshipPoint * 1.35)
                             }
                         })
                     })
