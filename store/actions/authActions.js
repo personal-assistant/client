@@ -1,6 +1,7 @@
 import Axios from 'axios'
 import { Platform } from 'react-native';
-const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
+// const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
+const baseUrl = 'http://35.247.157.227'
 
 export const register = newUser => {
   return (dispatch, getState) => {
