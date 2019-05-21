@@ -90,7 +90,7 @@ class Chat extends React.Component {
         chatLoaded: false,
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
         avatarImage: eveNeutral,
-        pitch: 1.5,
+        pitch: 1.3,
         rate: 1
     }
 
@@ -235,13 +235,6 @@ class Chat extends React.Component {
                         })
                     .then(({ data }) => {
                         console.log('==ini data===', data)
-                        if (data.code === 'food' || data.code === 'movie') {
-                            this.setState({
-                                apiData: data
-                            }, () => {
-                                this.containerOpen()
-                            })
-                        }
                         let point = (data.relationshipPoint / 100).toFixed(2)
                         this.setState({
                             relationshipPoint: point,
@@ -251,8 +244,14 @@ class Chat extends React.Component {
                             },
                             emotion
                         }, () => {
-                            this.renderAvatar()
-                            this.sendBotResponse(text)
+                          this.renderAvatar()
+                            if (data.code === 'food' || data.code === 'movie') {
+                                this.setState({
+                                    apiData: data
+                                }, () => {
+                                    this.containerOpen()
+                                })
+                            }
                         })
                     })
                     .catch(err => {
@@ -260,7 +259,7 @@ class Chat extends React.Component {
                     })
             }
         }
-        // this.sendBotResponse(text)
+        this.sendBotResponse(text)
     }
 
     sendBotResponse(text) {
@@ -429,9 +428,17 @@ class Chat extends React.Component {
                 this.setState({
                     image: uploadResult.imageUrl
                 }, () => {
+                    let payloadChat = ''
+                    if (uploadResult.data.includes('Flower')) {
+                        payloadChat = 'Flower'
+                    } else if (uploadResult.data.includes('Nature')) {
+                        payloadChat = 'Nature'
+                    }
+
                     this.onSend([{
                         "_id": Math.random(),
                         "createdAt": new Date(),
+                        "text": payloadChat,
                         "user": {
                             "_id": 1,
                         }
