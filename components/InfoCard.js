@@ -4,7 +4,8 @@ import {
     Image,
     ImageBackground,
     TouchableOpacity,
-    Linking
+    Linking,
+    StyleSheet
 } from 'react-native'
 import {
     Card,
@@ -16,15 +17,14 @@ import { WebBrowser } from 'expo'
 export default class infoCard extends Component {
 
     render() {
-        const { title, image, link } = this.props
+        const { title, image, link, type } = this.props
         return (
             <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(link)}>
-                <Card style={{
-                    width: 200,
-                    height: 200,
-                    marginRight: 5,
-                    marginLeft: 5
-                }}>
+                <Card
+                    style={
+                        type === 'food' ?
+                            (style.foodStyle) : (style.movieStyle)}
+                >
                     <CardItem cardBody>
                         <ImageBackground
                             source={{ uri: image }}
@@ -56,3 +56,18 @@ export default class infoCard extends Component {
         )
     }
 }
+
+const style = StyleSheet.create({
+    foodStyle: {
+        width: 200,
+        height: 200,
+        marginRight: 5,
+        marginLeft: 5
+    },
+    movieStyle: {
+        width: 130,
+        height: 200,
+        marginRight: 5,
+        marginLeft: 5
+    }
+})
