@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons'
 import Login from './containers/Login'
 import Register from './containers/Register'
 import Chat from './containers/Chat'
+import MovieDetail from './containers/MovieDetail'
 
 const ChatStack = createStackNavigator({
   Chat: {
@@ -13,6 +14,9 @@ const ChatStack = createStackNavigator({
       title: 'Eve'
     }
   },
+  MovieDetail: {
+    screen: MovieDetail
+  }
 }, {
     headerMode: 'none',
     navigationOptions: {

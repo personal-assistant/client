@@ -16,10 +16,24 @@ import { WebBrowser } from 'expo'
 
 export default class infoCard extends Component {
 
+    handlePress = (type, link, movieId) => {
+        console.log('===========ini props==========',this.props, movieId)
+        if (type === 'food') {
+            WebBrowser.openBrowserAsync(link)
+        } else {
+            this.props.navigation.navigate('MovieDetail', {
+                movieId
+            })
+        }
+    }
+
     render() {
-        const { title, image, link, type } = this.props
+        const { title, image, link, type, movieId } = this.props
         return (
-            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(link)}>
+            <TouchableOpacity
+
+                onPress={() => this.handlePress(type, link, movieId)}
+            >
                 <Card
                     style={
                         type === 'food' ?
