@@ -85,8 +85,8 @@ class Chat extends React.Component {
         color: {
             h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
+            l: 39
         },
-        l: 39
         chatLoaded: false,
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
         avatarImage: eveNeutral,
@@ -157,8 +157,32 @@ class Chat extends React.Component {
         }
     }
 
+    componentWillMount() {
+        Dialogflow_V2.setConfiguration(
+            dialogflowConfig.client_email,
+            dialogflowConfig.private_key,
+            "id",
+            dialogflowConfig.project_id
+        )
+    }
+
+
     componentDidMount = async () => {
         console.log('componet did mount!', new Date())
+        if (Platform.OS === 'android') {
+            Expo.Notifications.createChannelAndroidAsync('reminders', {
+                name: 'Reminders',
+                priority: 'high',
+                vibrate: true,
+                sound: true
+            });
+        }
+
+        let result = await Permissions.askAsync(Permissions.NOTIFICATIONS);
+        if (result.status === 'granted') {
+            console.log('Notification permissions granted.')
+        }
+        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100).toFixed(2)
         let chatHistory = []
 
         firebase
@@ -173,44 +197,32 @@ class Chat extends React.Component {
                     let newDoc = { ...doc.data(), createdAt: doc.data().createdAt.toDate() }
                     chatHistory.push(newDoc)
                 })
-                this.setState({
-                    messages: chatHistory,
-                    chatLoaded: true
-                })
+                if (chatHistory.length === 0) {
+                    let message = 'first_interaction'
+                    Dialogflow_V2.requestQuery(
+                        message,
+                        result => this.handleGoogleResponse(result),
+                        error => console.log(error)
+                    )
+                    this.setState({
+                        chatLoaded: true,
+                        relationshipPoint: point
+                    })
+                } else {
+                    this.setState({
+                        messages: chatHistory,
+                        chatLoaded: true,
+                        relationshipPoint: point
+                    })
+                }
             })
             .catch(err => {
                 console.log(err)
             })
-
-        let point = (this.props.auth.loggedInUser.user.relationshipPoint / 100).toFixed(2)
-        this.setState({
-            relationshipPoint: point
-        })
-        console.log('=====relationshipppppp=====', this.props.auth.loggedInUser.user.relationshipPoint)
-
-        if (Platform.OS === 'android') {
-            Expo.Notifications.createChannelAndroidAsync('reminders', {
-                name: 'Reminders',
-                priority: 'high',
-                vibrate: true,
-                sound: true
-            });
-        }
-
-        Dialogflow_V2.setConfiguration(
-            dialogflowConfig.client_email,
-            dialogflowConfig.private_key,
-            "id",
-            dialogflowConfig.project_id
-        )
-
-        let result = await Permissions.askAsync(Permissions.NOTIFICATIONS);
-        if (result.status === 'granted') {
-            console.log('Notification permissions granted.')
-        }
     }
 
     handleGoogleResponse(result) {
+        console.log('==result inni===', result)
         let { relationshipPoint, color } = this.state
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
         let code
@@ -244,7 +256,7 @@ class Chat extends React.Component {
                             },
                             emotion
                         }, () => {
-                          this.renderAvatar()
+                            this.renderAvatar()
                             if (data.code === 'food' || data.code === 'movie') {
                                 this.setState({
                                     apiData: data
@@ -283,6 +295,7 @@ class Chat extends React.Component {
     }
 
     onSend(messages = [], sendImage) {
+        console.log('===user message==', messages)
         if (sendImage) {
             messages[0].image = sendImage
         }
@@ -290,7 +303,6 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages)
         }))
-        console.log('==ini message====', messages)
 
         let message = messages[0].text
         Dialogflow_V2.requestQuery(
@@ -440,7 +452,7 @@ class Chat extends React.Component {
                         "createdAt": new Date(),
                         "text": payloadChat,
                         "user": {
-                          "_id": 1,
+                            "_id": 1,
                         }
                     }], uploadResult.imageUrl)
                 })
@@ -624,8 +636,8 @@ class Chat extends React.Component {
                     />
                     {
                         showContainer ? (
-                            <FoodContainer 
-                                apiData={apiData} 
+                            <FoodContainer
+                                apiData={apiData}
                                 navigation={this.props.navigation}
                             />
                         ) : null
