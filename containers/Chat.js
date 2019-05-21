@@ -54,14 +54,14 @@ const baseUrl = 'http://35.247.157.227'
 import test from '../assets/test.gif'
 import testgif from '../assets/loading.gif'
 import {
-  eveAngry,
-  eveBlushing,
-  eveConfused,
-  eveDisgusted,
-  eveHappy,
-  eveNeutral,
-  eveSad,
-  eveSmile
+    eveAngry,
+    eveBlushing,
+    eveConfused,
+    eveDisgusted,
+    eveHappy,
+    eveNeutral,
+    eveSad,
+    eveSmile
 } from '../assets/emotions'
 
 const BOT_USER = {
@@ -104,13 +104,13 @@ class Chat extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.avatarImage !== prevState.avatarImage) {
-          console.log("harus render avatar")
-          this.renderAvatar()
+            console.log("harus render avatar")
+            this.renderAvatar()
         }
     }
 
     renderAvatar = () => {
-      console.log("harusnya rendererr")
+        console.log("harusnya rendererr")
         switch (this.state.emotion) {
             case 'angry':
                 this.setState({
@@ -151,7 +151,7 @@ class Chat extends React.Component {
                     avatarImage: eveSmile
                 })
                 break;
-            break;
+                break;
             default:
                 break;
         }
@@ -251,8 +251,8 @@ class Chat extends React.Component {
                             },
                             emotion
                         }, () => {
-                          this.renderAvatar()
-                          this.sendBotResponse(text)
+                            this.renderAvatar()
+                            this.sendBotResponse(text)
                         })
                     })
                     .catch(err => {
@@ -433,7 +433,7 @@ class Chat extends React.Component {
                         "_id": Math.random(),
                         "createdAt": new Date(),
                         "user": {
-                          "_id": 1,
+                            "_id": 1,
                         }
                     }], uploadResult.imageUrl)
                 })
@@ -452,27 +452,27 @@ class Chat extends React.Component {
 
     async handleDatePicker() {
         try {
-        let {action, year, month, day} = await DatePickerAndroid.open({
-            date: new Date(),
-            minDate: new Date()
-        });
-
-        if (action !== DatePickerAndroid.dismissedAction) {
-            let {action, hour, minute} = await TimePickerAndroid.open({
-                hour: 14,
-                minute: 0,
-                is24Hour: true
+            let { action, year, month, day } = await DatePickerAndroid.open({
+                date: new Date(),
+                minDate: new Date()
             });
-            if (action !== TimePickerAndroid.dismissedAction) {
-                this.scheduleNotification(new Date(year, month, day, hour, minute))
+
+            if (action !== DatePickerAndroid.dismissedAction) {
+                let { action, hour, minute } = await TimePickerAndroid.open({
+                    hour: 14,
+                    minute: 0,
+                    is24Hour: true
+                });
+                if (action !== TimePickerAndroid.dismissedAction) {
+                    this.scheduleNotification(new Date(year, month, day, hour, minute))
+                } else {
+                    this.sendBotResponse('ngga jadi ya, yaudah deh')
+                }
             } else {
                 this.sendBotResponse('ngga jadi ya, yaudah deh')
             }
-        } else {
-            this.sendBotResponse('ngga jadi ya, yaudah deh')
-        }
-        } catch ({code, message}) {
-        console.warn('Cannot open date picker', message);
+        } catch ({ code, message }) {
+            console.warn('Cannot open date picker', message);
         }
     }
 
@@ -482,18 +482,18 @@ class Chat extends React.Component {
 
         const timer = alarm - timeNow
         let notificationId = await Notifications.scheduleLocalNotificationAsync(
-          {
-            title: "Reminder",
-            body: "Wow, I can show up even when app is closed",
-            android: {
-                channelId: 'reminders',
-                color: '#FF0000'
+            {
+                title: "Reminder",
+                body: "Wow, I can show up even when app is closed",
+                android: {
+                    channelId: 'reminders',
+                    color: '#FF0000'
+                }
+            },
+            {
+                // repeat: "minute",
+                time: new Date().getTime() + timer
             }
-          },
-          {
-            // repeat: "minute",
-            time: new Date().getTime() + timer
-          }
         );
         setTimeout(() => {
             this.sendBotResponse('Kamu punya reminder!')
@@ -512,15 +512,15 @@ class Chat extends React.Component {
 
         if (!chatLoaded) {
             return (
-                <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-                <Image
-                  source={require('../assets/loading.gif')}
-                  style={{
-                    width: 144,
-                    height: 95
-                  }}
-                />
-                <Text style={{marginTop: 10, fontSize: 30}}>Loading...</Text>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Image
+                        source={require('../assets/loading.gif')}
+                        style={{
+                            width: 144,
+                            height: 95
+                        }}
+                    />
+                    <Text style={{ marginTop: 10, fontSize: 30 }}>Loading...</Text>
                 </View>
             )
         }
@@ -617,7 +617,10 @@ class Chat extends React.Component {
                     />
                     {
                         showContainer ? (
-                            <FoodContainer apiData={apiData} />
+                            <FoodContainer 
+                                apiData={apiData} 
+                                navigation={this.props.navigation}
+                            />
                         ) : null
                     }
                 </KeyboardAvoidingView>
