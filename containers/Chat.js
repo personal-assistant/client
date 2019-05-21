@@ -14,7 +14,7 @@ import {
     DatePickerAndroid,
     TimePickerAndroid
 } from "react-native"
-import { Constants, ImagePicker, Permissions, Notifications } from 'expo'
+import { Constants, ImagePicker, Permissions, Notifications, Speech } from 'expo'
 import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
@@ -89,7 +89,17 @@ class Chat extends React.Component {
         },
         chatLoaded: false,
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
-        avatarImage: eveNeutral
+        avatarImage: eveNeutral,
+        pitch: 1.5,
+        rate: 1
+    }
+
+    _speak = (text) => {
+        Speech.speak(text, {
+            language: 'id',
+            pitch: this.state.pitch,
+            rate: this.state.rate,
+        });
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -264,7 +274,7 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, [msg])
         }))
-
+        this._speak(text)
         firebase
             .firestore()
             .collection('users')
@@ -273,7 +283,11 @@ class Chat extends React.Component {
             .add(msg)
     }
 
-    onSend(messages = []) {
+    onSend(messages = [], sendImage) {
+        if (sendImage) {
+            messages[0].image = sendImage
+        }
+
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, messages)
         }))
@@ -414,7 +428,15 @@ class Chat extends React.Component {
                 console.log('===upload result====', uploadResult)
                 this.setState({
                     image: uploadResult.imageUrl
-                });
+                }, () => {
+                    this.onSend([{
+                        "_id": Math.random(),
+                        "createdAt": new Date(),
+                        "user": {
+                          "_id": 1,
+                        }
+                    }], uploadResult.imageUrl)
+                })
             }
         } catch (e) {
             console.log({ uploadResponse });
