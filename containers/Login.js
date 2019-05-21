@@ -23,15 +23,15 @@ import { connect } from 'react-redux'
 
 class Login extends Component {
   state = {
-    email: 'afit@mail.com',
-    password: '1',
+    email: '',
+    password: '',
     token: '',
     clicked: false
   }
 
   componentDidMount() {
     this.getToken()
-    this.submitForm()
+    // this.submitForm()
   }
 
   componentDidUpdate(prevProps, prevState) {

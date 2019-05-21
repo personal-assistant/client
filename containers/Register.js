@@ -74,6 +74,7 @@ class Register extends Component {
   }
 
   submitForm = async () => {
+    console.log('masok pak ekooo')
     try {
       const { name, email, password, token } = this.state
       console.log(this.state)
@@ -84,6 +85,7 @@ class Register extends Component {
         password,
         expoNotificationToken: token
       })
+      console.log('sukses')
 
     } catch (err) {
       console.log(err)
