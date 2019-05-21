@@ -85,8 +85,8 @@ class Chat extends React.Component {
         color: {
             h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
-            l: 39
         },
+        l: 39
         chatLoaded: false,
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
         avatarImage: eveNeutral,
@@ -103,7 +103,7 @@ class Chat extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.state.avatarImage !== prevState.avatarImage) {
+        if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint) {
             console.log("harus render avatar")
             this.renderAvatar()
         }
