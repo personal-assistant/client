@@ -51,11 +51,18 @@ import HSLtoHex from '../helpers/HSLtoHex'
 console.disableYellowBox = true
 // const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 const baseUrl = 'http://35.247.157.227'
-import eve1 from '../assets/eve.gif'
-import eve2 from '../assets/eve2.gif'
-import eve3 from '../assets/eve3.gif'
 import test from '../assets/test.gif'
 import testgif from '../assets/loading.gif'
+import {
+  eveAngry,
+  eveBlushing,
+  eveConfused,
+  eveDisgusted,
+  eveHappy,
+  eveNeutral,
+  eveSad,
+  eveSmile
+} from '../assets/emotions'
 
 const BOT_USER = {
     _id: 2,
@@ -82,26 +89,58 @@ class Chat extends React.Component {
         },
         chatLoaded: false,
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
-        avatarImage: test
+        avatarImage: eveNeutral
     }
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.avatarImage !== prevState.avatarImage) {
+          console.log("harus render avatar")
           this.renderAvatar()
         }
     }
 
     renderAvatar = () => {
+      console.log("harusnya rendererr")
         switch (this.state.emotion) {
+            case 'angry':
+                this.setState({
+                    avatarImage: eveAngry
+                })
+                break;
             case 'blushing':
                 this.setState({
-                    avatarImage: eve2
+                    avatarImage: eveBlushing
+                })
+                break;
+            case 'confused':
+                this.setState({
+                    avatarImage: eveConfused
+                })
+                break;
+            case 'disgusted':
+                this.setState({
+                    avatarImage: eveDisgusted
+                })
+                break;
+            case 'happy':
+                this.setState({
+                    avatarImage: eveHappy
                 })
                 break;
             case 'neutral':
                 this.setState({
-                    avatarImage: testgif
+                    avatarImage: eveNeutral
                 })
+            case 'sad':
+                this.setState({
+                    avatarImage: eveSad
+                })
+                break;
+            case 'smile':
+                this.setState({
+                    avatarImage: eveSmile
+                })
+                break;
             break;
             default:
                 break;
@@ -201,6 +240,9 @@ class Chat extends React.Component {
                                 h: Math.round(data.relationshipPoint * 1.35)
                             },
                             emotion
+                        }, () => {
+                          this.renderAvatar()
+                          this.sendBotResponse(text)
                         })
                     })
                     .catch(err => {
@@ -208,7 +250,7 @@ class Chat extends React.Component {
                     })
             }
         }
-        this.sendBotResponse(text)
+        // this.sendBotResponse(text)
     }
 
     sendBotResponse(text) {
@@ -392,7 +434,7 @@ class Chat extends React.Component {
             date: new Date(),
             minDate: new Date()
         });
-        
+
         if (action !== DatePickerAndroid.dismissedAction) {
             let {action, hour, minute} = await TimePickerAndroid.open({
                 hour: 14,
@@ -415,7 +457,7 @@ class Chat extends React.Component {
     scheduleNotification = async (userInput) => {
         const alarm = new Date(userInput).getTime()
         const timeNow = new Date().getTime()
-    
+
         const timer = alarm - timeNow
         let notificationId = await Notifications.scheduleLocalNotificationAsync(
           {

@@ -23,8 +23,8 @@ import { connect } from 'react-redux'
 
 class Login extends Component {
   state = {
-    email: 'admin@admin.com',
-    password: 'admin',
+    email: 'afit@mail.com',
+    password: '1',
     token: '',
     clicked: false
   }
