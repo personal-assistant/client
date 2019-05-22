@@ -38,7 +38,7 @@ const authReducer = (state = initState, action) => {
       return {
         ...state,
         authError: null,
-        loggedInUser: action.payload
+        loggedInUser: null
       }
 
     case 'SIGNOUT_ERROR':
@@ -46,6 +46,12 @@ const authReducer = (state = initState, action) => {
         ...state,
         authError: action.payload
       }
+      case "SPLASH_LOGIN":
+        return {
+          ...state,
+          loggedInUser: action.payload,
+          authError: null
+        }
 
     case 'DISMISS_AUTH_ERROR':
       return {

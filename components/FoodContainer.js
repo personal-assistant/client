@@ -22,7 +22,6 @@ export default class FoodContainer extends Component {
                 >
                     {
                         apiData.data.map((e, index) => {
-                            console.log(e)
                             let image = apiData.code === 'food' ? (e.thumb) : (`https://image.tmdb.org/t/p/w400${e.poster_path}`)
                             let title = apiData.code === 'food' ? (e.name) : (e.title)
                             let link = apiData.code === 'food' ? (e.url) : null

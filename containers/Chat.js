@@ -22,8 +22,9 @@ import {
     Text,
 } from 'native-base'
 import axios from 'axios'
-import { Platform } from 'react-native'
+import { Platform, AsyncStorage } from 'react-native'
 import { connect } from 'react-redux'
+import {logout} from '../store/actions/authActions'
 import FoodContainer from '../components/FoodContainer'
 import firebase from '../serverAPI/firebaseConfig'
 import * as Progress from 'react-native-progress'
@@ -31,8 +32,6 @@ import HSLtoHex from '../helpers/HSLtoHex'
 console.disableYellowBox = true
 // const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 const baseUrl = 'http://35.247.157.227'
-import test from '../assets/test.gif'
-import testgif from '../assets/loading.gif'
 import {
     eveAngry,
     eveBlushing,
@@ -74,7 +73,8 @@ class Chat extends React.Component {
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
         avatarImage: eveNeutral,
         pitch: 1.3,
-        rate: 1
+        rate: 1,
+        reminderReady: false
     }
 
     _speak = (text) => {
@@ -155,7 +155,6 @@ class Chat extends React.Component {
 
 
     componentDidMount = async () => {
-        console.log('componet did mount!', new Date())
         if (Platform.OS === 'android') {
             Expo.Notifications.createChannelAndroidAsync('reminders', {
                 name: 'Reminders',
@@ -208,8 +207,7 @@ class Chat extends React.Component {
             })
     }
 
-    handleGoogleResponse(result) {
-        console.log('==result inni===', result)
+    handleGoogleResponse = (result) => {
         let { relationshipPoint, color } = this.state
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
         let code
@@ -224,7 +222,22 @@ class Chat extends React.Component {
                 emotion
             })
             if (code === 'reminder') {
-                this.handleDatePicker()
+                this.setState({
+                    reminderReady: true
+                })
+            } else if(code === 'logout'){
+                AsyncStorage.removeItem('token')
+                .then(()=>{
+                    this.props.logout()
+                    this.props.navigation.navigate("Auth")
+
+                })
+                .catch(err=>{
+                    console.log(err.message)
+                    console.log("masuk error remove item AsyncStorae");
+                    
+                })
+                
             } else {
                 axios
                     .post(baseUrl + '/action', {
@@ -236,7 +249,6 @@ class Chat extends React.Component {
                             }
                         })
                     .then(({ data }) => {
-                        console.log('==ini data===', data)
                         let point = (data.relationshipPoint / 100).toFixed(2)
                         this.setState({
                             relationshipPoint: point,
@@ -283,10 +295,13 @@ class Chat extends React.Component {
             .add(msg)
     }
 
-    onSend(messages = [], sendImage) {
-        console.log('===user message==', messages)
+    onSend = (messages = [], sendImage) => {
         if (sendImage) {
             messages[0].image = sendImage
+        }
+
+        if (this.state.reminderReady) {
+            this.handleDatePicker(messages[0].text)
         }
 
         this.setState(previousState => ({
@@ -294,11 +309,19 @@ class Chat extends React.Component {
         }))
 
         let message = messages[0].text
-        Dialogflow_V2.requestQuery(
-            message,
-            result => this.handleGoogleResponse(result),
-            error => console.log(error)
-        )
+
+        if (!this.state.reminderReady) {
+            Dialogflow_V2.requestQuery(
+                message,
+                result => this.handleGoogleResponse(result),
+                error => console.log(error)
+            )
+        } else {
+            this.sendBotResponse('iya nanti aku ingetin')
+            this.setState({
+                reminderReady: false
+            })
+        }
 
         firebase
             .firestore()
@@ -329,9 +352,7 @@ class Chat extends React.Component {
 
     containerOpen = () => {
         let { apiData } = this.state
-        console.log('ni api data nyaaaa', apiData)
         if (apiData.data) {
-            console.log('opening container...')
             Keyboard.dismiss()
             this.setState({ showContainer: !this.state.showContainer })
         }
@@ -374,7 +395,6 @@ class Chat extends React.Component {
     }
 
     openCamera = async () => {
-        console.log('open camera !!')
         const {
             status: cameraPerm
         } = await Permissions.askAsync(Permissions.CAMERA);
@@ -383,11 +403,8 @@ class Chat extends React.Component {
             status: cameraRollPerm
         } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
 
-        // only if user allows permission to camera AND camera roll
         if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchCameraAsync({
-                // allowsEditing: true,
-                // aspect: [4, 3],
                 quality: 0.3
             });
 
@@ -396,15 +413,12 @@ class Chat extends React.Component {
     }
 
     openAlbum = async () => {
-        console.log('open album !!')
         const {
             status: cameraRollPerm
         } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
 
         if (cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchImageLibraryAsync({
-                // allowsEditing: true,
-                // aspect: [4, 3],
                 quality: 0.3
             });
 
@@ -415,7 +429,6 @@ class Chat extends React.Component {
     _handleImagePicked = async pickerResult => {
 
         let uploadResponse, uploadResult;
-        console.log('====ini auth====', this.props)
         try {
             this.setState({
                 uploading: true
@@ -456,7 +469,7 @@ class Chat extends React.Component {
         }
     }
 
-    async handleDatePicker() {
+    async handleDatePicker(message) {
         try {
             let { action, year, month, day } = await DatePickerAndroid.open({
                 date: new Date(),
@@ -470,7 +483,7 @@ class Chat extends React.Component {
                     is24Hour: true
                 });
                 if (action !== TimePickerAndroid.dismissedAction) {
-                    this.scheduleNotification(new Date(year, month, day, hour, minute))
+                    this.scheduleNotification(new Date(year, month, day, hour, minute), message)
                 } else {
                     this.sendBotResponse('ngga jadi ya, yaudah deh')
                 }
@@ -482,7 +495,7 @@ class Chat extends React.Component {
         }
     }
 
-    scheduleNotification = async (userInput) => {
+    scheduleNotification = async (userInput, msg) => {
         const alarm = new Date(userInput).getTime()
         const timeNow = new Date().getTime()
 
@@ -490,7 +503,7 @@ class Chat extends React.Component {
         let notificationId = await Notifications.scheduleLocalNotificationAsync(
             {
                 title: "Reminder",
-                body: "Wow, I can show up even when app is closed",
+                body: msg,
                 android: {
                     channelId: 'reminders',
                     color: '#FF0000'
@@ -502,9 +515,8 @@ class Chat extends React.Component {
             }
         );
         setTimeout(() => {
-            this.sendBotResponse('Kamu punya reminder!')
+            this.sendBotResponse('Kamu punya reminder: ' + msg)
         }, timer);
-        console.log(notificationId);
     };
 
     getColor = () => {
@@ -697,10 +709,16 @@ const mapStateToProps = state => {
     }
 }
 
+const mapDispatchToProps = dispatch => {
+    return {
+      logout: () => dispatch(logout())
+    }
+  }
+
+export default connect(mapStateToProps, mapDispatchToProps)(Chat)
+
 const styles = StyleSheet.create({
     emotionHeader: {
         fontSize: 23
     }
 });
-
-export default connect(mapStateToProps, null)(Chat)
