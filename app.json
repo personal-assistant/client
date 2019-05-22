@@ -18,7 +18,11 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.vyonizr.eve",
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.vyonizr.eve"
     }
   }
 }

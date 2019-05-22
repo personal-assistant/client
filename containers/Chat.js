@@ -3,13 +3,10 @@ import { GiftedChat, Bubble } from "react-native-gifted-chat"
 import {
     StyleSheet,
     View,
-    Alert,
     Image,
     Keyboard,
-    SafeAreaView,
     KeyboardAvoidingView,
     StatusBar,
-    ScrollView,
     TouchableOpacity,
     DatePickerAndroid,
     TimePickerAndroid
@@ -19,27 +16,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
 import {
-    Container,
     Header,
-    Title,
-    Content,
-    Footer,
-    FooterTab,
-    Button,
     ActionSheet,
     Root,
-    Left,
-    Right,
-    Body,
-    Icon,
     Text,
-    Card,
-    CardItem,
-    Label,
-    Form,
-    Input,
-    Item,
-    Thumbnail
 } from 'native-base'
 import axios from 'axios'
 import { Platform, AsyncStorage } from 'react-native'
@@ -62,7 +42,8 @@ import {
     eveHappy,
     eveNeutral,
     eveSad,
-    eveSmile
+    eveSmile,
+    eveLaughing
 } from '../assets/emotions'
 
 const BOT_USER = {
@@ -105,13 +86,12 @@ class Chat extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint) {
-            console.log("harus render avatar")
+            // console.log("harus render avatar")
             this.renderAvatar()
         }
     }
 
     renderAvatar = () => {
-        console.log("harusnya rendererr")
         switch (this.state.emotion) {
             case 'angry':
                 this.setState({
@@ -142,6 +122,7 @@ class Chat extends React.Component {
                 this.setState({
                     avatarImage: eveNeutral
                 })
+                break;
             case 'sad':
                 this.setState({
                     avatarImage: eveSad
@@ -152,6 +133,10 @@ class Chat extends React.Component {
                     avatarImage: eveSmile
                 })
                 break;
+            case 'laughing':
+                this.setState({
+                    avatarImage: eveLaughing
+                })
                 break;
             default:
                 break;
@@ -233,6 +218,7 @@ class Chat extends React.Component {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
             emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
+            console.log(emotion, "<== emotiion")
 
             if (code === 'reminder') {
                 this.handleDatePicker()
@@ -271,7 +257,7 @@ class Chat extends React.Component {
                             },
                             emotion
                         }, () => {
-                            this.renderAvatar()
+                            // this.renderAvatar()
                             if (data.code === 'food' || data.code === 'movie') {
                                 this.setState({
                                     apiData: data
@@ -300,7 +286,7 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, [msg])
         }))
-        this._speak(text)
+        // this._speak(text)
         firebase
             .firestore()
             .collection('users')
@@ -448,10 +434,8 @@ class Chat extends React.Component {
             });
 
             if (!pickerResult.cancelled) {
-                console.log('==token====', this.props.auth.loggedInUser.token)
                 uploadResponse = await uploadImageAsync(pickerResult.uri, this.props.auth.loggedInUser.token)
                 uploadResult = await uploadResponse.json();
-                console.log('===upload result====', uploadResult)
                 this.setState({
                     image: uploadResult.imageUrl
                 }, () => {
@@ -542,7 +526,7 @@ class Chat extends React.Component {
 
 
     render() {
-        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage } = this.state
+        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage, emotion } = this.state
 
         if (!chatLoaded) {
             return (
@@ -604,8 +588,37 @@ class Chat extends React.Component {
                                 justifyContent: 'center',
                                 backgroundColor: 'white'
                             }}>
+
                                 <View style={{
-                                    flex: 1,
+                                    flex: 3,
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                }}>
+                                    {
+                                      emotion === "angry" ? (
+                                        <Text style={styles.emotionHeader}>Mad</Text>
+                                      ) : emotion === "blushing" ? (
+                                        <Text style={styles.emotionHeader}>Blushing</Text>
+                                      ) : emotion === "confused" ? (
+                                        <Text style={styles.emotionHeader}>Confused</Text>
+                                      ) : emotion === "disgusted" ? (
+                                        <Text style={styles.emotionHeader}>Disgusted</Text>
+                                      ) : emotion === "happy" ? (
+                                        <Text style={styles.emotionHeader}>Happy</Text>
+                                      ) : emotion === "laughing" ? (
+                                        <Text style={styles.emotionHeader}>Laughing</Text>
+                                      ) : emotion === "neutral" ? (
+                                        <Text style={styles.emotionHeader}>Neutral</Text>
+                                      ) : emotion === "sad" ? (
+                                        <Text style={styles.emotionHeader}>Sad</Text>
+                                      ) : emotion === "smile" ? (
+                                        <Text style={styles.emotionHeader}>Smiling</Text>
+                                      ) : null
+                                    }
+                                </View>
+
+                                <View style={{
+                                    flex: 3,
                                     flexDirection: 'row',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -629,7 +642,6 @@ class Chat extends React.Component {
                                         unfilledColor='#d4d4d4'
                                         borderColor='white'
                                     />
-
                                 </View>
 
                             </View>
@@ -695,6 +707,7 @@ const mapStateToProps = state => {
     }
 }
 
+<<<<<<< HEAD
 const mapDispatchToProps = dispatch => {
     return {
       logout: () => dispatch(logout())
@@ -702,3 +715,12 @@ const mapDispatchToProps = dispatch => {
   }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
+=======
+const styles = StyleSheet.create({
+  emotionHeader: {
+    fontSize: 23
+  }
+});
+
+export default connect(mapStateToProps, null)(Chat)
+>>>>>>> dev
