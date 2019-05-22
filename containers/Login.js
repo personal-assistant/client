@@ -4,7 +4,8 @@ import { Permissions, Notifications } from 'expo';
 import axios from '../serverAPI/backendServer'
 import {
   Image,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Alert
 } from "react-native";
 import {
   Container,
@@ -18,7 +19,7 @@ import {
   Input,
   Item,
 } from 'native-base';
-import { login } from '../store/actions/authActions'
+import { login, dismissAuthError } from '../store/actions/authActions'
 import { connect } from 'react-redux'
 
 class Login extends Component {
@@ -79,6 +80,23 @@ class Login extends Component {
     }
   }
 
+  clearForm = () => {
+    this.setState({
+      email: '',
+      password: '',
+    })
+  }
+
+  dismissAuthAlert = () => {
+    try {
+      this.props.dismissAuthError()
+      this.clearForm()
+    }
+    catch(err) {
+      console.log(err)
+    }
+  }
+
   render() {
     return (
       <KeyboardAvoidingView
@@ -91,6 +109,18 @@ class Login extends Component {
           paddingTop: Constants.statusBarHeight,
         }}
       >
+      {
+        this.props.auth.authError ? (
+          Alert.alert(
+            'Oops!',
+            'Login failed.',
+            [
+              {text: 'OK', onPress: () => this.props.dismissAuthError()},
+            ],
+            {cancelable: false},
+          )
+        ) : null
+      }
         <Container style={{ backgroundColor: "white" }}>
           <Content>
             <Container>
@@ -206,7 +236,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    login: user => dispatch(login(user))
+    login: user => dispatch(login(user)),
+    dismissAuthError: () => dispatch(dismissAuthError())
   }
 }
 

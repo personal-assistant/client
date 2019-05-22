@@ -38,3 +38,11 @@ export const login = user => {
     })
   }
 }
+
+export const dismissAuthError = () => {
+  return (dispatch, getState) => {
+    dispatch({
+      type: 'DISMISS_AUTH_ERROR'
+    })
+  }
+}
