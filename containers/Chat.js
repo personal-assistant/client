@@ -3,13 +3,10 @@ import { GiftedChat, Bubble } from "react-native-gifted-chat"
 import {
     StyleSheet,
     View,
-    Alert,
     Image,
     Keyboard,
-    SafeAreaView,
     KeyboardAvoidingView,
     StatusBar,
-    ScrollView,
     TouchableOpacity,
     DatePickerAndroid,
     TimePickerAndroid
@@ -17,33 +14,17 @@ import {
 import { Constants, ImagePicker, Permissions, Notifications, Speech } from 'expo'
 import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
-import { dialogflowConfig } from '../env'
+import { dialogflowConfig_ngambek, dialogflowConfig_normal } from '../env'
 import {
-    Container,
     Header,
-    Title,
-    Content,
-    Footer,
-    FooterTab,
-    Button,
     ActionSheet,
     Root,
-    Left,
-    Right,
-    Body,
-    Icon,
     Text,
-    Card,
-    CardItem,
-    Label,
-    Form,
-    Input,
-    Item,
-    Thumbnail
 } from 'native-base'
 import axios from 'axios'
-import { Platform } from 'react-native'
+import { Platform, AsyncStorage } from 'react-native'
 import { connect } from 'react-redux'
+import { logout } from '../store/actions/authActions'
 import FoodContainer from '../components/FoodContainer'
 import firebase from '../serverAPI/firebaseConfig'
 import * as Progress from 'react-native-progress'
@@ -51,8 +32,6 @@ import HSLtoHex from '../helpers/HSLtoHex'
 console.disableYellowBox = true
 // const baseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000'
 const baseUrl = 'http://35.247.157.227'
-import test from '../assets/test.gif'
-import testgif from '../assets/loading.gif'
 import {
     eveAngry,
     eveBlushing,
@@ -61,12 +40,15 @@ import {
     eveHappy,
     eveNeutral,
     eveSad,
-    eveSmile
+    eveSmile,
+    eveLaughing
 } from '../assets/emotions'
+import profilePicture from '../assets/profile_picture.jpg'
 
 const BOT_USER = {
     _id: 2,
     name: 'Eve',
+    avatar: profilePicture
 }
 
 const BUTTONS = ["Camera", "Album", "Cancel"];
@@ -82,6 +64,8 @@ class Chat extends React.Component {
         image: null,
         uploading: false,
         relationshipPoint: 0,
+        isAngry: false,
+        angryPoint: 0,
         color: {
             h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
@@ -91,7 +75,8 @@ class Chat extends React.Component {
         emotion: 'neutral', //happy, smile, neutral, sad, angry, disgusted, confused, blushing,
         avatarImage: eveNeutral,
         pitch: 1.3,
-        rate: 1
+        rate: 1,
+        reminderReady: false
     }
 
     _speak = (text) => {
@@ -103,14 +88,26 @@ class Chat extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint) {
-            console.log("harus render avatar")
+        if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint || this.state.emotion !== prevState.emotion) {
             this.renderAvatar()
         }
+        console.log(this.state.angryPoint)
+        // if (this.state.angryPoint === 0 && this.state.isAngry === true) {
+        //     this.setState({
+        //         isAngry: false,
+        //         angryPoint: 0
+        //     })
+        //     this.setDialogflowConfig('normal')
+        // } else if (this.state.emotion === 'angry' && this.state.isAngry === false) {
+        //     this.setDialogflowConfig('angry')
+        //     this.setState({
+        //         isAngry: true,
+        //         angryPoint: 3
+        //     })
+        // }
     }
 
     renderAvatar = () => {
-        console.log("harusnya rendererr")
         switch (this.state.emotion) {
             case 'angry':
                 this.setState({
@@ -141,6 +138,7 @@ class Chat extends React.Component {
                 this.setState({
                     avatarImage: eveNeutral
                 })
+                break;
             case 'sad':
                 this.setState({
                     avatarImage: eveSad
@@ -151,6 +149,10 @@ class Chat extends React.Component {
                     avatarImage: eveSmile
                 })
                 break;
+            case 'laughing':
+                this.setState({
+                    avatarImage: eveLaughing
+                })
                 break;
             default:
                 break;
@@ -158,17 +160,28 @@ class Chat extends React.Component {
     }
 
     componentWillMount() {
-        Dialogflow_V2.setConfiguration(
-            dialogflowConfig.client_email,
-            dialogflowConfig.private_key,
-            "id",
-            dialogflowConfig.project_id
-        )
+        this.setDialogflowConfig('normal')
     }
 
+    setDialogflowConfig = (code) => {
+        if (code === 'normal') {
+            Dialogflow_V2.setConfiguration(
+                dialogflowConfig_normal.client_email,
+                dialogflowConfig_normal.private_key,
+                "id",
+                dialogflowConfig_normal.project_id
+            )
+        } else if (code === 'angry') {
+            Dialogflow_V2.setConfiguration(
+                dialogflowConfig_ngambek.client_email,
+                dialogflowConfig_ngambek.private_key,
+                "id",
+                dialogflowConfig_ngambek.project_id
+            )
+        }
+    }
 
     componentDidMount = async () => {
-        console.log('componet did mount!', new Date())
         if (Platform.OS === 'android') {
             Expo.Notifications.createChannelAndroidAsync('reminders', {
                 name: 'Reminders',
@@ -221,57 +234,124 @@ class Chat extends React.Component {
             })
     }
 
-    handleGoogleResponse(result) {
-        console.log('==result inni===', result)
+    handleGoogleResponse = (result) => {
         let { relationshipPoint, color } = this.state
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
         let code
         let point
+        let angryPoint
+        let forgived = false
 
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
             emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
+            angryCode = result.queryResult.fulfillmentMessages[1].payload.angryCode
 
+            console.log(result.queryResult.fulfillmentMessages[1].payload, '<== payload')
+
+            this.setState({
+                emotion
+            })
             if (code === 'reminder') {
-                this.handleDatePicker()
-            } else {
-                axios
-                    .post(baseUrl + '/action', {
-                        code,
-                        relationshipPoint: point
-                    }, {
-                            headers: {
-                                authorization: this.props.auth.loggedInUser.token
-                            }
-                        })
-                    .then(({ data }) => {
-                        console.log('==ini data===', data)
-                        let point = (data.relationshipPoint / 100).toFixed(2)
-                        this.setState({
-                            relationshipPoint: point,
-                            color: {
-                                ...color,
-                                h: Math.round(data.relationshipPoint * 1.35)
-                            },
-                            emotion
-                        }, () => {
-                            this.renderAvatar()
-                            if (data.code === 'food' || data.code === 'movie') {
-                                this.setState({
-                                    apiData: data
-                                }, () => {
-                                    this.containerOpen()
-                                })
-                            }
-                        })
+                this.setState({
+                    reminderReady: true
+                })
+            } else if (code === 'logout') {
+                AsyncStorage.removeItem('token')
+                    .then(() => {
+                        this.props.logout()
+                        this.props.navigation.navigate("Auth")
+
                     })
                     .catch(err => {
-                        console.log(err)
+                        console.log(err.message)
+                        console.log("masuk error remove item AsyncStorae");
+
                     })
+
+            } else if (angryCode === 'forgived') {
+
+                this.setDialogflowConfig('normal')
+                this.setState({
+                    isAngry: false
+                })
+
+            } else if (emotion === 'angry') {
+                this.updateRelationshipBar(undefined, point)
+                console.log('masok angry')
+                if (this.state.isAngry === false) {
+                    console.log('masok isangry false')
+                    this.setDialogflowConfig('angry')
+                    this.setState({
+                        angryPoint: 3,
+                        isAngry: true
+                    })
+                } else {
+                    if (angryCode === 'positive') {
+                        if (this.state.angryPoint === 0) {
+                            forgived = true
+                            let message = '$user_forgived'
+                            Dialogflow_V2.requestQuery(
+                                message,
+                                result => this.handleGoogleResponse(result),
+                                error => console.log(error)
+                            )
+                        } else {
+                            this.setState({
+                                angryPoint: this.state.angryPoint - 1
+                            })
+                        }
+                    } else if (angryCode === 'negative') {
+                        this.setState({
+                            angryPoint: this.state.angryPoint + 1
+                        })
+                    }
+                }
+            } else {
+                this.updateRelationshipBar(code, point)
             }
         }
-        this.sendBotResponse(text)
+
+        if (!forgived) {
+            this.sendBotResponse(text)
+        }
+    }
+
+    updateRelationshipBar = (code, relationshipPoint) => {
+        let { color } = this.state
+
+        axios
+            .post(baseUrl + '/action', {
+                code,
+                relationshipPoint
+            }, {
+                    headers: {
+                        authorization: this.props.auth.loggedInUser.token
+                    }
+                })
+            .then(({ data }) => {
+                let point = (data.relationshipPoint / 100).toFixed(2)
+                this.setState({
+                    relationshipPoint: point,
+                    color: {
+                        ...color,
+                        h: Math.round(data.relationshipPoint * 1.35)
+                    },
+                }, () => {
+                    // this.renderAvatar()
+                    if (data.code === 'food' || data.code === 'movie') {
+                        this.setState({
+                            apiData: data
+                        }, () => {
+                            this.containerOpen()
+                        })
+                    }
+                })
+            })
+            .catch(err => {
+                console.log(err.response.data)
+            })
     }
 
     sendBotResponse(text) {
@@ -285,7 +365,7 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, [msg])
         }))
-        this._speak(text)
+        // this._speak(text)
         firebase
             .firestore()
             .collection('users')
@@ -294,29 +374,52 @@ class Chat extends React.Component {
             .add(msg)
     }
 
-    onSend(messages = [], sendImage) {
-        console.log('===user message==', messages)
+    onSend = (messages = [], sendImage) => {
         if (sendImage) {
             messages[0].image = sendImage
         }
 
+        if (this.state.reminderReady) {
+            this.handleDatePicker(messages[0].text)
+        }
+
         this.setState(previousState => ({
-            messages: GiftedChat.append(previousState.messages, messages)
+            messages: GiftedChat.append(previousState.messages, sendImage ? [{
+                _id: messages[0]._id,
+                createdAt: messages[0].createdAt,
+                text: '',
+                image: messages[0].image,
+                user: messages[0].user,
+            }] : messages)
         }))
 
         let message = messages[0].text
-        Dialogflow_V2.requestQuery(
-            message,
-            result => this.handleGoogleResponse(result),
-            error => console.log(error)
-        )
+
+        if (!this.state.reminderReady) {
+            Dialogflow_V2.requestQuery(
+                message,
+                result => this.handleGoogleResponse(result),
+                error => console.log(error)
+            )
+        } else {
+            this.sendBotResponse('iya nanti aku ingetin')
+            this.setState({
+                reminderReady: false
+            })
+        }
 
         firebase
             .firestore()
             .collection('users')
             .doc(this.props.auth.loggedInUser.user._id)
             .collection('messages')
-            .add(messages[0])
+            .add(sendImage ? {
+                _id: messages[0]._id,
+                createdAt: messages[0].createdAt,
+                text: '',
+                image: messages[0].image,
+                user: messages[0].user,
+            } : messages[0])
 
     }
 
@@ -340,9 +443,7 @@ class Chat extends React.Component {
 
     containerOpen = () => {
         let { apiData } = this.state
-        console.log('ni api data nyaaaa', apiData)
         if (apiData.data) {
-            console.log('opening container...')
             Keyboard.dismiss()
             this.setState({ showContainer: !this.state.showContainer })
         }
@@ -385,7 +486,6 @@ class Chat extends React.Component {
     }
 
     openCamera = async () => {
-        console.log('open camera !!')
         const {
             status: cameraPerm
         } = await Permissions.askAsync(Permissions.CAMERA);
@@ -394,11 +494,8 @@ class Chat extends React.Component {
             status: cameraRollPerm
         } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
 
-        // only if user allows permission to camera AND camera roll
         if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchCameraAsync({
-                // allowsEditing: true,
-                // aspect: [4, 3],
                 quality: 0.3
             });
 
@@ -407,15 +504,12 @@ class Chat extends React.Component {
     }
 
     openAlbum = async () => {
-        console.log('open album !!')
         const {
             status: cameraRollPerm
         } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
 
         if (cameraRollPerm === 'granted') {
             let pickerResult = await ImagePicker.launchImageLibraryAsync({
-                // allowsEditing: true,
-                // aspect: [4, 3],
                 quality: 0.3
             });
 
@@ -426,17 +520,14 @@ class Chat extends React.Component {
     _handleImagePicked = async pickerResult => {
 
         let uploadResponse, uploadResult;
-        console.log('====ini auth====', this.props)
         try {
             this.setState({
                 uploading: true
             });
 
             if (!pickerResult.cancelled) {
-                console.log('==token====', this.props.auth.loggedInUser.token)
                 uploadResponse = await uploadImageAsync(pickerResult.uri, this.props.auth.loggedInUser.token)
                 uploadResult = await uploadResponse.json();
-                console.log('===upload result====', uploadResult)
                 this.setState({
                     image: uploadResult.imageUrl
                 }, () => {
@@ -469,7 +560,7 @@ class Chat extends React.Component {
         }
     }
 
-    async handleDatePicker() {
+    async handleDatePicker(message) {
         try {
             let { action, year, month, day } = await DatePickerAndroid.open({
                 date: new Date(),
@@ -483,7 +574,7 @@ class Chat extends React.Component {
                     is24Hour: true
                 });
                 if (action !== TimePickerAndroid.dismissedAction) {
-                    this.scheduleNotification(new Date(year, month, day, hour, minute))
+                    this.scheduleNotification(new Date(year, month, day, hour, minute), message)
                 } else {
                     this.sendBotResponse('ngga jadi ya, yaudah deh')
                 }
@@ -495,7 +586,7 @@ class Chat extends React.Component {
         }
     }
 
-    scheduleNotification = async (userInput) => {
+    scheduleNotification = async (userInput, msg) => {
         const alarm = new Date(userInput).getTime()
         const timeNow = new Date().getTime()
 
@@ -503,7 +594,7 @@ class Chat extends React.Component {
         let notificationId = await Notifications.scheduleLocalNotificationAsync(
             {
                 title: "Reminder",
-                body: "Wow, I can show up even when app is closed",
+                body: msg,
                 android: {
                     channelId: 'reminders',
                     color: '#FF0000'
@@ -515,9 +606,8 @@ class Chat extends React.Component {
             }
         );
         setTimeout(() => {
-            this.sendBotResponse('Kamu punya reminder!')
+            this.sendBotResponse('Kamu punya reminder: ' + msg)
         }, timer);
-        console.log(notificationId);
     };
 
     getColor = () => {
@@ -527,7 +617,7 @@ class Chat extends React.Component {
 
 
     render() {
-        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage } = this.state
+        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage, emotion } = this.state
 
         if (!chatLoaded) {
             return (
@@ -589,8 +679,38 @@ class Chat extends React.Component {
                                 justifyContent: 'center',
                                 backgroundColor: 'white'
                             }}>
+
                                 <View style={{
-                                    flex: 1,
+                                    flex: 3,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginBottom: -45
+                                }}>
+                                    {
+                                        emotion === "angry" ? (
+                                            <Text style={styles.emotionHeader}>Mad</Text>
+                                        ) : emotion === "blushing" ? (
+                                            <Text style={styles.emotionHeader}>Blushing</Text>
+                                        ) : emotion === "confused" ? (
+                                            <Text style={styles.emotionHeader}>Confused</Text>
+                                        ) : emotion === "disgusted" ? (
+                                            <Text style={styles.emotionHeader}>Disgusted</Text>
+                                        ) : emotion === "happy" ? (
+                                            <Text style={styles.emotionHeader}>Happy</Text>
+                                        ) : emotion === "laughing" ? (
+                                            <Text style={styles.emotionHeader}>Laughing</Text>
+                                        ) : emotion === "neutral" ? (
+                                            <Text style={styles.emotionHeader}>Neutral</Text>
+                                        ) : emotion === "sad" ? (
+                                            <Text style={styles.emotionHeader}>Sad</Text>
+                                        ) : emotion === "smile" ? (
+                                            <Text style={styles.emotionHeader}>Smiling</Text>
+                                        ) : null
+                                    }
+                                </View>
+
+                                <View style={{
+                                    flex: 3,
                                     flexDirection: 'row',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -614,7 +734,6 @@ class Chat extends React.Component {
                                         unfilledColor='#d4d4d4'
                                         borderColor='white'
                                     />
-
                                 </View>
 
                             </View>
@@ -628,6 +747,7 @@ class Chat extends React.Component {
                             autoFocus: true
                         }}
                         renderBubble={this.renderBubble}
+                        showUserAvatar={true}
                         renderActions={this.renderActions}
                         onSend={messages => this.onSend(messages)}
                         user={{
@@ -680,4 +800,16 @@ const mapStateToProps = state => {
     }
 }
 
-export default connect(mapStateToProps, null)(Chat)
+const mapDispatchToProps = dispatch => {
+    return {
+        logout: () => dispatch(logout())
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Chat)
+
+const styles = StyleSheet.create({
+    emotionHeader: {
+        fontSize: 23
+    }
+});
