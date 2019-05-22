@@ -4,7 +4,7 @@ const initState = {
 }
 
 const authReducer = (state = initState, action) => {
-  switch(action.type) {
+  switch (action.type) {
     case 'REGISTER_SUCCESS':
       return {
         ...state,
@@ -13,6 +13,7 @@ const authReducer = (state = initState, action) => {
       }
 
     case 'REGISTER_ERROR': {
+      console.log(action.payload)
       return {
         ...state,
         authError: action.payload
@@ -30,7 +31,7 @@ const authReducer = (state = initState, action) => {
       return {
         ...state,
         authError: null,
-        loggedInUser:action.payload
+        loggedInUser: action.payload
       }
 
     case 'SIGNOUT_SUCCESS':
