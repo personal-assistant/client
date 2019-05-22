@@ -707,7 +707,6 @@ const mapStateToProps = state => {
     }
 }
 
-<<<<<<< HEAD
 const mapDispatchToProps = dispatch => {
     return {
       logout: () => dispatch(logout())
@@ -715,12 +714,9 @@ const mapDispatchToProps = dispatch => {
   }
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
-=======
+
 const styles = StyleSheet.create({
   emotionHeader: {
     fontSize: 23
   }
 });
-
-export default connect(mapStateToProps, null)(Chat)
->>>>>>> dev
