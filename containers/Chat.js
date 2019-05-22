@@ -42,8 +42,9 @@ import {
     Thumbnail
 } from 'native-base'
 import axios from 'axios'
-import { Platform } from 'react-native'
+import { Platform, AsyncStorage } from 'react-native'
 import { connect } from 'react-redux'
+import {logout} from '../store/actions/authActions'
 import FoodContainer from '../components/FoodContainer'
 import firebase from '../serverAPI/firebaseConfig'
 import * as Progress from 'react-native-progress'
@@ -221,7 +222,7 @@ class Chat extends React.Component {
             })
     }
 
-    handleGoogleResponse(result) {
+    handleGoogleResponse = (result) => {
         console.log('==result inni===', result)
         let { relationshipPoint, color } = this.state
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
@@ -235,6 +236,20 @@ class Chat extends React.Component {
 
             if (code === 'reminder') {
                 this.handleDatePicker()
+            } else if(code === 'logout'){
+                console.log("masuk logout")
+                AsyncStorage.removeItem('token')
+                .then(()=>{
+                    this.props.logout()
+                    this.props.navigation.navigate("Auth")
+
+                })
+                .catch(err=>{
+                    console.log(err.message)
+                    console.log("masuk error remove item AsyncStorae");
+                    
+                })
+                
             } else {
                 axios
                     .post(baseUrl + '/action', {
@@ -680,4 +695,10 @@ const mapStateToProps = state => {
     }
 }
 
-export default connect(mapStateToProps, null)(Chat)
+const mapDispatchToProps = dispatch => {
+    return {
+      logout: () => dispatch(logout())
+    }
+  }
+
+export default connect(mapStateToProps, mapDispatchToProps)(Chat)
