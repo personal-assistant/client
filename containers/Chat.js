@@ -14,7 +14,7 @@ import {
 import { Constants, ImagePicker, Permissions, Notifications, Speech } from 'expo'
 import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
-import { dialogflowConfig } from '../env'
+import { dialogflowConfig_ngambek, dialogflowConfig_normal } from '../env'
 import {
     Header,
     ActionSheet,
@@ -24,7 +24,7 @@ import {
 import axios from 'axios'
 import { Platform, AsyncStorage } from 'react-native'
 import { connect } from 'react-redux'
-import {logout} from '../store/actions/authActions'
+import { logout } from '../store/actions/authActions'
 import FoodContainer from '../components/FoodContainer'
 import firebase from '../serverAPI/firebaseConfig'
 import * as Progress from 'react-native-progress'
@@ -64,6 +64,8 @@ class Chat extends React.Component {
         image: null,
         uploading: false,
         relationshipPoint: 0,
+        isAngry: false,
+        angryPoint: 0,
         color: {
             h: Math.round(this.props.auth.loggedInUser.user.relationshipPoint * 1.35),
             s: 100,
@@ -87,9 +89,22 @@ class Chat extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint || this.state.emotion !== prevState.emotion) {
-            // console.log("harus render avatar")
             this.renderAvatar()
         }
+        console.log(this.state.angryPoint)
+        // if (this.state.angryPoint === 0 && this.state.isAngry === true) {
+        //     this.setState({
+        //         isAngry: false,
+        //         angryPoint: 0
+        //     })
+        //     this.setDialogflowConfig('normal')
+        // } else if (this.state.emotion === 'angry' && this.state.isAngry === false) {
+        //     this.setDialogflowConfig('angry')
+        //     this.setState({
+        //         isAngry: true,
+        //         angryPoint: 3
+        //     })
+        // }
     }
 
     renderAvatar = () => {
@@ -145,14 +160,26 @@ class Chat extends React.Component {
     }
 
     componentWillMount() {
-        Dialogflow_V2.setConfiguration(
-            dialogflowConfig.client_email,
-            dialogflowConfig.private_key,
-            "id",
-            dialogflowConfig.project_id
-        )
+        this.setDialogflowConfig('normal')
     }
 
+    setDialogflowConfig = (code) => {
+        if (code === 'normal') {
+            Dialogflow_V2.setConfiguration(
+                dialogflowConfig_normal.client_email,
+                dialogflowConfig_normal.private_key,
+                "id",
+                dialogflowConfig_normal.project_id
+            )
+        } else if (code === 'angry') {
+            Dialogflow_V2.setConfiguration(
+                dialogflowConfig_ngambek.client_email,
+                dialogflowConfig_ngambek.private_key,
+                "id",
+                dialogflowConfig_ngambek.project_id
+            )
+        }
+    }
 
     componentDidMount = async () => {
         if (Platform.OS === 'android') {
@@ -212,12 +239,17 @@ class Chat extends React.Component {
         let text = result.queryResult.fulfillmentMessages[0].text.text[0]
         let code
         let point
+        let angryPoint
+        let forgived = false
 
         if (result.queryResult.fulfillmentMessages[1]) {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
             emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
-            console.log(emotion, "<== emotiion")
+            angryCode = result.queryResult.fulfillmentMessages[1].payload.angryCode
+
+            console.log(result.queryResult.fulfillmentMessages[1].payload, '<== payload')
+
             this.setState({
                 emotion
             })
@@ -225,54 +257,101 @@ class Chat extends React.Component {
                 this.setState({
                     reminderReady: true
                 })
-            } else if(code === 'logout'){
+            } else if (code === 'logout') {
                 AsyncStorage.removeItem('token')
-                .then(()=>{
-                    this.props.logout()
-                    this.props.navigation.navigate("Auth")
+                    .then(() => {
+                        this.props.logout()
+                        this.props.navigation.navigate("Auth")
 
-                })
-                .catch(err=>{
-                    console.log(err.message)
-                    console.log("masuk error remove item AsyncStorae");
-                    
-                })
-                
-            } else {
-                axios
-                    .post(baseUrl + '/action', {
-                        code,
-                        relationshipPoint: point
-                    }, {
-                            headers: {
-                                authorization: this.props.auth.loggedInUser.token
-                            }
-                        })
-                    .then(({ data }) => {
-                        let point = (data.relationshipPoint / 100).toFixed(2)
-                        this.setState({
-                            relationshipPoint: point,
-                            color: {
-                                ...color,
-                                h: Math.round(data.relationshipPoint * 1.35)
-                            },
-                        }, () => {
-                            // this.renderAvatar()
-                            if (data.code === 'food' || data.code === 'movie') {
-                                this.setState({
-                                    apiData: data
-                                }, () => {
-                                    this.containerOpen()
-                                })
-                            }
-                        })
                     })
                     .catch(err => {
-                        console.log(err)
+                        console.log(err.message)
+                        console.log("masuk error remove item AsyncStorae");
+
                     })
+
+            } else if (angryCode === 'forgived') {
+
+                this.setDialogflowConfig('normal')
+                this.setState({
+                    isAngry: false
+                })
+
+            } else if (emotion === 'angry') {
+                this.updateRelationshipBar(undefined, point)
+                console.log('masok angry')
+                if (this.state.isAngry === false) {
+                    console.log('masok isangry false')
+                    this.setDialogflowConfig('angry')
+                    this.setState({
+                        angryPoint: 3,
+                        isAngry: true
+                    })
+                } else {
+                    if (angryCode === 'positive') {
+                        if (this.state.angryPoint === 0) {
+                            forgived = true
+                            let message = '$user_forgived'
+                            Dialogflow_V2.requestQuery(
+                                message,
+                                result => this.handleGoogleResponse(result),
+                                error => console.log(error)
+                            )
+                        } else {
+                            this.setState({
+                                angryPoint: this.state.angryPoint - 1
+                            })
+                        }
+                    } else if (angryCode === 'negative') {
+                        this.setState({
+                            angryPoint: this.state.angryPoint + 1
+                        })
+                    }
+                }
+            } else {
+                this.updateRelationshipBar(code, point)
             }
         }
-        this.sendBotResponse(text)
+
+        if (!forgived) {
+            this.sendBotResponse(text)
+        }
+    }
+
+    updateRelationshipBar = (code, relationshipPoint) => {
+        let { color } = this.state
+
+        axios
+            .post(baseUrl + '/action', {
+                code,
+                relationshipPoint
+            }, {
+                    headers: {
+                        authorization: this.props.auth.loggedInUser.token
+                    }
+                })
+            .then(({ data }) => {
+                let point = (data.relationshipPoint / 100).toFixed(2)
+                this.setState({
+                    relationshipPoint: point,
+                    color: {
+                        ...color,
+                        h: Math.round(data.relationshipPoint * 1.35)
+                    },
+                }, () => {
+                    // this.renderAvatar()
+                    if (data.code === 'food' || data.code === 'movie') {
+                        this.setState({
+                            apiData: data
+                        }, () => {
+                            this.containerOpen()
+                        })
+                    }
+                })
+            })
+            .catch(err => {
+                console.log(err.response.data)
+            })
     }
 
     sendBotResponse(text) {
@@ -711,9 +790,9 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
     return {
-      logout: () => dispatch(logout())
+        logout: () => dispatch(logout())
     }
-  }
+}
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
 
