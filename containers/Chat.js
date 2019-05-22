@@ -61,7 +61,8 @@ import {
     eveHappy,
     eveNeutral,
     eveSad,
-    eveSmile
+    eveSmile,
+    eveLaughing
 } from '../assets/emotions'
 
 const BOT_USER = {
@@ -104,13 +105,12 @@ class Chat extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint) {
-            console.log("harus render avatar")
+            // console.log("harus render avatar")
             this.renderAvatar()
         }
     }
 
     renderAvatar = () => {
-        console.log("harusnya rendererr")
         switch (this.state.emotion) {
             case 'angry':
                 this.setState({
@@ -141,6 +141,7 @@ class Chat extends React.Component {
                 this.setState({
                     avatarImage: eveNeutral
                 })
+                break;
             case 'sad':
                 this.setState({
                     avatarImage: eveSad
@@ -151,6 +152,10 @@ class Chat extends React.Component {
                     avatarImage: eveSmile
                 })
                 break;
+            case 'laughing':
+                this.setState({
+                    avatarImage: eveLaughing
+                })
                 break;
             default:
                 break;
@@ -527,7 +532,7 @@ class Chat extends React.Component {
 
 
     render() {
-        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage } = this.state
+        const { showContainer, apiData, relationshipPoint, color, chatLoaded, avatarImage, emotion } = this.state
 
         if (!chatLoaded) {
             return (
@@ -589,8 +594,37 @@ class Chat extends React.Component {
                                 justifyContent: 'center',
                                 backgroundColor: 'white'
                             }}>
+
                                 <View style={{
-                                    flex: 1,
+                                    flex: 3,
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                }}>
+                                    {
+                                      emotion === "angry" ? (
+                                        <Text style={styles.emotionHeader}>Mad</Text>
+                                      ) : emotion === "blushing" ? (
+                                        <Text style={styles.emotionHeader}>Blushing</Text>
+                                      ) : emotion === "confused" ? (
+                                        <Text style={styles.emotionHeader}>Confused</Text>
+                                      ) : emotion === "disgusted" ? (
+                                        <Text style={styles.emotionHeader}>Disgusted</Text>
+                                      ) : emotion === "happy" ? (
+                                        <Text style={styles.emotionHeader}>Happy</Text>
+                                      ) : emotion === "laughing" ? (
+                                        <Text style={styles.emotionHeader}>Laughing</Text>
+                                      ) : emotion === "neutral" ? (
+                                        <Text style={styles.emotionHeader}>Neutral</Text>
+                                      ) : emotion === "sad" ? (
+                                        <Text style={styles.emotionHeader}>Sad</Text>
+                                      ) : emotion === "smile" ? (
+                                        <Text style={styles.emotionHeader}>Smiling</Text>
+                                      ) : null
+                                    }
+                                </View>
+
+                                <View style={{
+                                    flex: 3,
                                     flexDirection: 'row',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -614,7 +648,6 @@ class Chat extends React.Component {
                                         unfilledColor='#d4d4d4'
                                         borderColor='white'
                                     />
-
                                 </View>
 
                             </View>
@@ -679,5 +712,11 @@ const mapStateToProps = state => {
         auth: state.auth
     }
 }
+
+const styles = StyleSheet.create({
+  emotionHeader: {
+    fontSize: 23
+  }
+});
 
 export default connect(mapStateToProps, null)(Chat)

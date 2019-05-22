@@ -74,7 +74,6 @@ class Login extends Component {
         password,
         expoNotificationToken: token
       })
-
     } catch (err) {
       console.log(err)
     }
