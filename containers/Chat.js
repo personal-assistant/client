@@ -43,10 +43,12 @@ import {
     eveSmile,
     eveLaughing
 } from '../assets/emotions'
+import profilePicture from '../assets/profile_picture.jpg'
 
 const BOT_USER = {
     _id: 2,
     name: 'Eve',
+    avatar: profilePicture
 }
 
 const BUTTONS = ["Camera", "Album", "Cancel"];
@@ -84,7 +86,8 @@ class Chat extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint) {
+        if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint || this.state.emotion !== prevState.emotion) {
+            // console.log("harus render avatar")
             this.renderAvatar()
         }
     }
@@ -214,7 +217,10 @@ class Chat extends React.Component {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
             emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
-
+            console.log(emotion, "<== emotiion")
+            this.setState({
+                emotion
+            })
             if (code === 'reminder') {
                 this.setState({
                     reminderReady: true
@@ -250,7 +256,6 @@ class Chat extends React.Component {
                                 ...color,
                                 h: Math.round(data.relationshipPoint * 1.35)
                             },
-                            emotion
                         }, () => {
                             // this.renderAvatar()
                             if (data.code === 'food' || data.code === 'movie') {
@@ -587,28 +592,29 @@ class Chat extends React.Component {
                                 <View style={{
                                     flex: 3,
                                     alignItems: 'center',
-                                    justifyContent: 'flex-end',
+                                    justifyContent: 'center',
+                                    marginBottom: -45
                                 }}>
                                     {
-                                      emotion === "angry" ? (
-                                        <Text style={styles.emotionHeader}>Mad</Text>
-                                      ) : emotion === "blushing" ? (
-                                        <Text style={styles.emotionHeader}>Blushing</Text>
-                                      ) : emotion === "confused" ? (
-                                        <Text style={styles.emotionHeader}>Confused</Text>
-                                      ) : emotion === "disgusted" ? (
-                                        <Text style={styles.emotionHeader}>Disgusted</Text>
-                                      ) : emotion === "happy" ? (
-                                        <Text style={styles.emotionHeader}>Happy</Text>
-                                      ) : emotion === "laughing" ? (
-                                        <Text style={styles.emotionHeader}>Laughing</Text>
-                                      ) : emotion === "neutral" ? (
-                                        <Text style={styles.emotionHeader}>Neutral</Text>
-                                      ) : emotion === "sad" ? (
-                                        <Text style={styles.emotionHeader}>Sad</Text>
-                                      ) : emotion === "smile" ? (
-                                        <Text style={styles.emotionHeader}>Smiling</Text>
-                                      ) : null
+                                        emotion === "angry" ? (
+                                            <Text style={styles.emotionHeader}>Mad</Text>
+                                        ) : emotion === "blushing" ? (
+                                            <Text style={styles.emotionHeader}>Blushing</Text>
+                                        ) : emotion === "confused" ? (
+                                            <Text style={styles.emotionHeader}>Confused</Text>
+                                        ) : emotion === "disgusted" ? (
+                                            <Text style={styles.emotionHeader}>Disgusted</Text>
+                                        ) : emotion === "happy" ? (
+                                            <Text style={styles.emotionHeader}>Happy</Text>
+                                        ) : emotion === "laughing" ? (
+                                            <Text style={styles.emotionHeader}>Laughing</Text>
+                                        ) : emotion === "neutral" ? (
+                                            <Text style={styles.emotionHeader}>Neutral</Text>
+                                        ) : emotion === "sad" ? (
+                                            <Text style={styles.emotionHeader}>Sad</Text>
+                                        ) : emotion === "smile" ? (
+                                            <Text style={styles.emotionHeader}>Smiling</Text>
+                                        ) : null
                                     }
                                 </View>
 
@@ -650,6 +656,7 @@ class Chat extends React.Component {
                             autoFocus: true
                         }}
                         renderBubble={this.renderBubble}
+                        showUserAvatar={true}
                         renderActions={this.renderActions}
                         onSend={messages => this.onSend(messages)}
                         user={{
@@ -711,7 +718,7 @@ const mapDispatchToProps = dispatch => {
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
 
 const styles = StyleSheet.create({
-  emotionHeader: {
-    fontSize: 23
-  }
+    emotionHeader: {
+        fontSize: 23
+    }
 });
