@@ -384,7 +384,13 @@ class Chat extends React.Component {
         }
 
         this.setState(previousState => ({
-            messages: GiftedChat.append(previousState.messages, messages)
+            messages: GiftedChat.append(previousState.messages, sendImage ? [{
+                _id: messages[0]._id,
+                createdAt: messages[0].createdAt,
+                text: '',
+                image: messages[0].image,
+                user: messages[0].user,
+            }] : messages)
         }))
 
         let message = messages[0].text
@@ -407,7 +413,13 @@ class Chat extends React.Component {
             .collection('users')
             .doc(this.props.auth.loggedInUser.user._id)
             .collection('messages')
-            .add(messages[0])
+            .add(sendImage ? {
+                _id: messages[0]._id,
+                createdAt: messages[0].createdAt,
+                text: '',
+                image: messages[0].image,
+                user: messages[0].user,
+            } : messages[0])
 
     }
 
