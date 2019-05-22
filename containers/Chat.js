@@ -3,13 +3,10 @@ import { GiftedChat, Bubble } from "react-native-gifted-chat"
 import {
     StyleSheet,
     View,
-    Alert,
     Image,
     Keyboard,
-    SafeAreaView,
     KeyboardAvoidingView,
     StatusBar,
-    ScrollView,
     TouchableOpacity,
     DatePickerAndroid,
     TimePickerAndroid
@@ -19,27 +16,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Dialogflow_V2 } from 'react-native-dialogflow'
 import { dialogflowConfig } from '../env'
 import {
-    Container,
     Header,
-    Title,
-    Content,
-    Footer,
-    FooterTab,
-    Button,
     ActionSheet,
     Root,
-    Left,
-    Right,
-    Body,
-    Icon,
     Text,
-    Card,
-    CardItem,
-    Label,
-    Form,
-    Input,
-    Item,
-    Thumbnail
 } from 'native-base'
 import axios from 'axios'
 import { Platform } from 'react-native'
@@ -237,6 +217,7 @@ class Chat extends React.Component {
             code = result.queryResult.fulfillmentMessages[1].payload.code
             point = result.queryResult.fulfillmentMessages[1].payload.point
             emotion = result.queryResult.fulfillmentMessages[1].payload.emotion
+            console.log(emotion, "<== emotiion")
 
             if (code === 'reminder') {
                 this.handleDatePicker()
@@ -261,7 +242,7 @@ class Chat extends React.Component {
                             },
                             emotion
                         }, () => {
-                            this.renderAvatar()
+                            // this.renderAvatar()
                             if (data.code === 'food' || data.code === 'movie') {
                                 this.setState({
                                     apiData: data
@@ -290,7 +271,7 @@ class Chat extends React.Component {
         this.setState(previousState => ({
             messages: GiftedChat.append(previousState.messages, [msg])
         }))
-        this._speak(text)
+        // this._speak(text)
         firebase
             .firestore()
             .collection('users')
@@ -438,10 +419,8 @@ class Chat extends React.Component {
             });
 
             if (!pickerResult.cancelled) {
-                console.log('==token====', this.props.auth.loggedInUser.token)
                 uploadResponse = await uploadImageAsync(pickerResult.uri, this.props.auth.loggedInUser.token)
                 uploadResult = await uploadResponse.json();
-                console.log('===upload result====', uploadResult)
                 this.setState({
                     image: uploadResult.imageUrl
                 }, () => {

@@ -1,33 +1,23 @@
 import React, { Component } from 'react';
-import axios from '../serverAPI/backendServer'
 import { Permissions, Notifications } from 'expo';
 import { Constants } from 'expo'
 import {
-  StyleSheet,
-  View,
   Image,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Alert
 } from "react-native";
 import {
   Container,
-  Header,
-  Title,
   Content,
   Footer,
   FooterTab,
   Button,
-  Left,
-  Right,
-  Body,
-  Icon,
   Text,
-  Label,
   Form,
   Input,
   Item,
-  Thumbnail
 } from 'native-base';
-import { register } from '../store/actions/authActions'
+import { register, dismissAuthError } from '../store/actions/authActions'
 import { connect } from 'react-redux'
 
 class Register extends Component {
@@ -92,6 +82,23 @@ class Register extends Component {
     }
   }
 
+  clearForm = () => {
+    this.setState({
+      email: '',
+      password: '',
+    })
+  }
+
+  dismissAuthAlert = () => {
+    try {
+      this.clearForm()
+      this.props.dismissAuthError()
+    }
+    catch(err) {
+      console.log(err)
+    }
+  }
+
   render() {
     return (
       <KeyboardAvoidingView
@@ -104,6 +111,18 @@ class Register extends Component {
           paddingTop: Constants.statusBarHeight,
         }}
       >
+        {
+          this.props.auth.authError ? (
+            Alert.alert(
+              'Oops!',
+              'Register failed.',
+              [
+                {text: 'OK', onPress: () => this.props.dismissAuthError()},
+              ],
+              {cancelable: false},
+            )
+          ) : null
+        }
         <Container style={{ backgroundColor: "white" }}>
           <Content>
             <Container>
@@ -237,7 +256,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    register: newUser => dispatch(register(newUser))
+    register: newUser => dispatch(register(newUser)),
+    dismissAuthError: () => dispatch(dismissAuthError())
   }
 }
 

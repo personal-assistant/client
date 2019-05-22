@@ -16,7 +16,7 @@ const authReducer = (state = initState, action) => {
       console.log(action.payload)
       return {
         ...state,
-        authError: action.payload
+        authError: "Register failed"
       }
     }
 
@@ -45,6 +45,12 @@ const authReducer = (state = initState, action) => {
       return {
         ...state,
         authError: action.payload
+      }
+
+    case 'DISMISS_AUTH_ERROR':
+      return {
+        ...state,
+        authError: null
       }
 
     default:
