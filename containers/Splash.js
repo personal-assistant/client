@@ -8,10 +8,8 @@ export class Splash extends Component {
 
   componentDidMount(){
 
-    console.log("cdm")
     AsyncStorage.getItem('token')
     .then(result=>{
-      console.log("masuk axios")
       return axios({
         method:'get',
         url: "http://35.247.157.227/users/user",
@@ -21,7 +19,6 @@ export class Splash extends Component {
       })
     })
     .then(({data})=>{
-      console.log("masukk app")
       this.props.setUser(data)
       this.props.navigation.navigate("App")
     })

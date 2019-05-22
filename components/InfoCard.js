@@ -17,7 +17,6 @@ import { WebBrowser } from 'expo'
 export default class infoCard extends Component {
 
     handlePress = (type, link, movieId) => {
-        console.log('===========ini props==========',this.props, movieId)
         if (type === 'food') {
             WebBrowser.openBrowserAsync(link)
         } else {
