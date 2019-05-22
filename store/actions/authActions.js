@@ -49,7 +49,6 @@ export const login = user => {
   }
 }
 
-<<<<<<< HEAD
 export const setUser = loginData => {
   return {
     type : "SPLASH_LOGIN",
@@ -60,12 +59,13 @@ export const setUser = loginData => {
 export const logout = () =>{
   return {
     type : "SIGNOUT_SUCCESS",
-=======
+  }
+}
+
 export const dismissAuthError = () => {
   return (dispatch, getState) => {
     dispatch({
       type: 'DISMISS_AUTH_ERROR'
     })
->>>>>>> dev
   }
 }
