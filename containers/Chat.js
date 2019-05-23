@@ -270,7 +270,7 @@ class Chat extends React.Component {
                     console.log('masok isangry false')
                     this.setDialogflowConfig('angry')
                     this.setState({
-                        angryPoint: 2,
+                        angryPoint: 1,
                         isAngry: true
                     })
                 } else {
