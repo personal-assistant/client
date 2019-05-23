@@ -91,6 +91,20 @@ class Chat extends React.Component {
         if (this.state.avatarImage !== prevState.avatarImage || this.state.relationshipPoint !== prevState.relationshipPoint || this.state.emotion !== prevState.emotion) {
             this.renderAvatar()
         }
+        console.log(this.state.angryPoint)
+        // if (this.state.angryPoint === 0 && this.state.isAngry === true) {
+        //     this.setState({
+        //         isAngry: false,
+        //         angryPoint: 0
+        //     })
+        //     this.setDialogflowConfig('normal')
+        // } else if (this.state.emotion === 'angry' && this.state.isAngry === false) {
+        //     this.setDialogflowConfig('angry')
+        //     this.setState({
+        //         isAngry: true,
+        //         angryPoint: 3
+        //     })
+        // }
     }
 
     renderAvatar = () => {
